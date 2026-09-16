@@ -36,7 +36,7 @@ Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal hel
 | `UNLOAD_FILAMENT` | `TEMP` (220) | Heat, soften tip, staged retract, disable extruder stepper. |
 | `DISPLAY_MESSAGE` | `MESSAGE` | Print `MESSAGE` to the console; helper for other macros. |
 
-> Beeps on pause are silent until `[output_pin beeper]` (PC5) gets `pwm: True` **and** the `M300` block at the bottom of `macros.cfg` is uncommented.
+> Pause beeps are enabled: `[output_pin beeper]` (PC5) runs in `pwm: True` mode and `macros.cfg` defines `M300 S<freq> P<ms>`. The pause alert is 3 × 1000ms beeps at 1kHz.
 
 ## PAUSE / RESUME flow
 
@@ -77,5 +77,6 @@ END_PRINT
 
 ## Change log
 
+- **2026-09-16** — Enabled pause beeps: `[output_pin beeper]` set to `pwm: True`, added `M300` macro, pause alert = 3 × 1000ms beeps. Verified live.
 - **2026-09-16** — `macros.cfg` rewritten and deployed to the printer: two-stage PAUSE/RESUME (retract, bed-drop, back-park, standby cooling, beep; resume reheat/purge then continue), safe `END_PRINT`/`CANCEL_PRINT`, renamed `G29`/`G30`/`G40` to `CALIBRATE_Z_OFFSET`/`CALIBRATE_MESH`/`CALIBRATE_SHAPER`. Verified live (`FIRMWARE_RESTART` → ready). `mainsail.cfg` refreshed to its true symlink-target content.
 - **2026-09-16** — Initial backup of current machine state. Obico `auth_token` excluded via `.gitignore`.
