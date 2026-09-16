@@ -13,34 +13,36 @@ Backup of the Klipper configuration for a Kingroon KLP1.
 | SSH user | `mks` |
 | Config path | `/home/mks/printer_data/config` |
 
+Note: `mainsail.cfg` on the printer is a **symlink** to `~/mainsail-config/client.cfg` (read-only stock Mainsail macros). It defines `PAUSE`/`RESUME`/`CANCEL_PRINT`, but `printer.cfg` includes `macros.cfg` **after** it, so the custom versions in `macros.cfg` override the stock ones.
+
 ## Macros
 
-Documented as they currently exist in [`macros.cfg`](macros.cfg). (Behavior has **not** been rewritten yet — this is the original machine state.)
+Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal helpers.
 
 | Macro | Parameters (default) | Description |
 |-------|----------------------|-------------|
-| `START_PRINT` | `BED_TEMP` (60), `EXTRUDER_TEMP` (220) | Heat bed, home if needed, heat hotend, draw purge line, start print. |
-| `END_PRINT` | — | Retract if hot, wipe, raise Z, heaters + fan off, move to center-back (X107 Y200 Z200), disable steppers. |
-| `PAUSE` | `Z` (10), `E` (1) | Save state, Z-hop, retract `E`, park front (X10 Y10), hotend off, idle timeout 12h. Single-stage. |
-| `RESUME` | `E` (2.5) | Reheat to saved temp, restore park position, prime `E` + lower Z, resume. |
-| `CANCEL_PRINT` | — | Heaters off, cancel base, raise Z 10mm, move X10, disable motors, fan off. |
-| `G29` | — | Home if needed, move to X105 Y105, run `PROBE_CALIBRATE` (Z offset / probe calibration). |
-| `G30` | — | Home if needed, clear + run `BED_MESH_CALIBRATE`, save/load bed mesh profile `JRLanger`. |
-| `G40` | — | Query accelerometer, reset input shaper, home if needed, fan full, `SHAPER_CALIBRATE`, `SAVE_CONFIG`. |
-| `SHAPER_CALIBRATE` | — | Wraps `RESHAPER_CALIBRATE` with `FREQ_START=5 FREQ_END=100`. |
-| `BED_TRAM` | `BED_TEMP` (optional) | Home, heat bed if `BED_TEMP` given, `SCREWS_TILT_CALCULATE`, drop bed for screw access. |
-| `LOAD_FILAMENT` | — | Heat to 220°C, extrude 100mm slowly. |
-| `UNLOAD_FILAMENT` | — | Heat to 220°C, purge/retract, cool to 62°C, final 50mm retract, motors off. |
+| `START_PRINT` | `BED_TEMP` (60), `EXTRUDER_TEMP` (220), `MESH` ("JRLanger") | Preheat nozzle to 150°C, heat bed, home, load mesh profile, heat nozzle, draw purge line. Warns if slicer passes no temps. |
+| `END_PRINT` | — | Heaters + fan off, small retract, raise Z, park center-back, disable steppers. |
+| `CANCEL_PRINT` | — | Heaters + fan off, reset pause timers, restore idle timeout, cancel, retract, raise Z, park back-left, motors off. |
+| `PAUSE` | `Z` (z_lift, default 50) | Retract, drop bed, park at back, cool nozzle to standby, optional beep, idle timeout 12h. |
+| `RESUME` | — | **Two-stage.** 1st call: reheat + purge (then clean nozzle). 2nd call: restore position, prime, continue print. |
+| `_PAUSE_CFG` | (variables) | Settings holder for PAUSE/RESUME: park pos, z_lift, retract, standby_drop, heater_off_after, purge, beep. Edit values here. |
+| `_PAUSE_PURGE` | `LENGTH` (30, max 45) | Manual purge at the purge position while paused. |
+| `CALIBRATE_Z_OFFSET` | `BED_TEMP` (optional) | Home, move to bed center, run `PROBE_CALIBRATE`. Adjust with `TESTZ`, `ACCEPT`, then `SAVE_CONFIG`. |
+| `CALIBRATE_MESH` | `BED_TEMP` (60), `SOAK` (0 min), `PROFILE` ("JRLanger") | Heat bed, optional soak, home, probe mesh, save profile. |
+| `CALIBRATE_SHAPER` | — | Query accelerometer, home, `SHAPER_CALIBRATE`. Review results, then `SAVE_CONFIG` manually. |
+| `BED_TRAM` | `BED_TEMP` (optional) | Home, heat bed if given, `SCREWS_TILT_CALCULATE`, drop bed for screw access. |
+| `LOAD_FILAMENT` | `TEMP` (220), `LENGTH` (50) | Heat, load filament (split into safe chunks). |
+| `UNLOAD_FILAMENT` | `TEMP` (220) | Heat, soften tip, staged retract, disable extruder stepper. |
 | `DISPLAY_MESSAGE` | `MESSAGE` | Print `MESSAGE` to the console; helper for other macros. |
+
+> Beeps on pause are silent until `[output_pin beeper]` (PC5) gets `pwm: True` **and** the `M300` block at the bottom of `macros.cfg` is uncommented.
 
 ## PAUSE / RESUME flow
 
-Current behavior (single-stage):
-
-- **PAUSE** — saves gcode state, Z-hops by `Z` (default 10mm, capped at Z max), retracts `E` (default 1mm), parks the toolhead at the **front** (X10 Y10), turns the hotend off, and extends idle timeout to 12h.
-- **RESUME** — reheats the hotend to the saved target, restores the parked position, primes `E` (default 2.5mm) while lowering Z back down, then continues the print.
-
-> Note: this is not the two-stage bed-drop / back-park / beep / standby flow — that rewrite has not been done.
+- **PAUSE** — retracts, drops the bed (Z lift, clamped below Z max), parks at the back, cools the nozzle to standby (print temp minus `standby_drop`), beeps (if enabled), and extends idle timeout to 12h. Hotend fully off after `heater_off_after` seconds.
+- **RESUME (1st press)** — reheats the nozzle and purges at the purge position. Clean the nozzle, then press RESUME again. `_PAUSE_PURGE` can be run for more purge.
+- **RESUME (2nd press)** — restores idle timeout, returns to the parked height and print position, primes, and continues the print.
 
 ## Slicer G-code
 
@@ -58,22 +60,22 @@ END_PRINT
 
 ## Calibration order
 
-Using the macro names as they exist today:
-
-1. `BED_TRAM` — tram the bed with the screw-tilt probe (optionally `BED_TRAM BED_TEMP=60`).
-2. `G30` — bed mesh calibrate (saves/loads profile `JRLanger`).
+1. `BED_TRAM` — tram the bed (optionally `BED_TRAM BED_TEMP=60`).
+2. `CALIBRATE_MESH BED_TEMP=60`
 3. `SAVE_CONFIG`
-4. `G29` — Z offset / probe calibrate.
+4. `CALIBRATE_Z_OFFSET`
 5. `SAVE_CONFIG`
-6. `G40` — input shaper calibrate (runs `SAVE_CONFIG` internally).
-7. `SAVE_CONFIG` (if not already saved by `G40`).
+6. `CALIBRATE_SHAPER`
+7. `SAVE_CONFIG`
 
 ## How to restore
 
 1. Copy these files back into `/home/mks/printer_data/config` on the printer (SSH user `mks`).
 2. Re-create any excluded secrets file (e.g. `moonraker-obico.cfg` with the Obico `auth_token`).
-3. In Mainsail, click **Save & Restart**.
+3. `mainsail.cfg` is a symlink on the printer — do not overwrite the symlink; the tracked copy is only a content snapshot.
+4. In Mainsail, click **Save & Restart** (or `FIRMWARE_RESTART`).
 
 ## Change log
 
-- **2026-09-16** — Initial backup of the current machine state. `macros.cfg` reviewed and documented as-is (no behavior changes). Obico `auth_token` excluded from the repo via `.gitignore`.
+- **2026-09-16** — `macros.cfg` rewritten and deployed to the printer: two-stage PAUSE/RESUME (retract, bed-drop, back-park, standby cooling, beep; resume reheat/purge then continue), safe `END_PRINT`/`CANCEL_PRINT`, renamed `G29`/`G30`/`G40` to `CALIBRATE_Z_OFFSET`/`CALIBRATE_MESH`/`CALIBRATE_SHAPER`. Verified live (`FIRMWARE_RESTART` → ready). `mainsail.cfg` refreshed to its true symlink-target content.
+- **2026-09-16** — Initial backup of current machine state. Obico `auth_token` excluded via `.gitignore`.
