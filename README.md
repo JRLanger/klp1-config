@@ -32,9 +32,20 @@ Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal hel
 | `CALIBRATE_MESH` | `BED_TEMP` (60), `SOAK` (0 min), `PROFILE` ("JRLanger") | Heat bed, optional soak, home, probe mesh, save profile. |
 | `CALIBRATE_SHAPER` | — | Query accelerometer, home, `SHAPER_CALIBRATE`. Review results, then `SAVE_CONFIG` manually. |
 | `BED_TRAM` | `BED_TEMP` (optional) | Home, heat bed if given, `SCREWS_TILT_CALCULATE`, drop bed for screw access. |
-| `M600` | — | Filament change: pause, eject old filament, then load new + two-stage resume (see below). |
-| `LOAD_FILAMENT` | `TEMP` (220), `LENGTH` (50) | Heat, load filament (split into safe chunks). |
-| `UNLOAD_FILAMENT` | `TEMP` (220) | Heat, soften tip, staged retract, disable extruder stepper. |
+| `M600` | `MATERIAL` (PLA) | Filament change: pause, eject, then load new + two-stage resume (see below). |
+| `LOAD_FILAMENT` | `MATERIAL` (PLA), `TEMP`, `LENGTH` (50) | Heat to material temp, load filament (split into safe chunks). |
+| `UNLOAD_FILAMENT` | `MATERIAL` (PLA), `TEMP`, `PULL_TEMP` | Heat, yank from melt zone, cold-pull at the material's pull temp. |
+| `_MAT` | (variable) | Per-material temp table (`hot`/`pull`). Edit temps here in one place. |
+
+Material presets (edit in `_MAT`):
+
+| MATERIAL | hot (load/unload) | pull (cold pull) |
+|----------|-------------------|------------------|
+| PLA | 220 | 90 |
+| PETG | 240 | 110 |
+| ABS | 250 | 120 |
+
+Usage: `LOAD_FILAMENT MATERIAL=PETG`, `UNLOAD_FILAMENT MATERIAL=ABS`, `M600 MATERIAL=PETG`. Override per call with `TEMP=`/`PULL_TEMP=`. Unknown/no material falls back to PLA.
 | `DISPLAY_MESSAGE` | `MESSAGE` | Print `MESSAGE` to the console; helper for other macros. |
 
 > Pause beeps are enabled: `[output_pin beeper]` (PC5) runs in `pwm: True` mode and `macros.cfg` defines `M300 S<freq> P<ms>`. The pause alert is 3 × 1000ms beeps at 1kHz.
@@ -89,6 +100,7 @@ END_PRINT
 
 ## Change log
 
+- **2026-09-16** — Parametrized `LOAD_FILAMENT`/`UNLOAD_FILAMENT`/`M600` by `MATERIAL` (PLA/PETG/ABS) via a `_MAT` temp table; per-call `TEMP`/`PULL_TEMP` overrides.
 - **2026-09-16** — Added `M600` filament change (pause + eject + two-stage resume via Fluidd macro/Resume buttons). Added `[respond]` to printer.cfg (unused by Fluidd; kept for Mainsail popups).
 - **2026-09-16** — Enabled pause beeps: `[output_pin beeper]` set to `pwm: True`, added `M300` macro, pause alert = 3 × 1000ms beeps. Verified live.
 - **2026-09-16** — `macros.cfg` rewritten and deployed to the printer: two-stage PAUSE/RESUME (retract, bed-drop, back-park, standby cooling, beep; resume reheat/purge then continue), safe `END_PRINT`/`CANCEL_PRINT`, renamed `G29`/`G30`/`G40` to `CALIBRATE_Z_OFFSET`/`CALIBRATE_MESH`/`CALIBRATE_SHAPER`. Verified live (`FIRMWARE_RESTART` → ready). `mainsail.cfg` refreshed to its true symlink-target content.
