@@ -72,8 +72,10 @@ Usage: `LOAD_FILAMENT MATERIAL=PETG`, `UNLOAD_FILAMENT MATERIAL=ABS`, `M600 MATE
 **Start G-code:**
 
 ```
-START_PRINT BED_TEMP=[bed_temperature_initial_layer_single] EXTRUDER_TEMP=[nozzle_temperature_initial_layer]
+START_PRINT BED_TEMP=[bed_temperature_initial_layer_single] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] MATERIAL=[filament_type]
 ```
+
+`MATERIAL` is stashed by `START_PRINT`, so a bare slicer-inserted `M600` (color change) auto-uses the print's material for the cold pull. Override any time with `M600 MATERIAL=ABS`.
 
 **End G-code:**
 
@@ -104,6 +106,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-09-16** — `START_PRINT` now stashes `MATERIAL`; bare `M600`/`LOAD`/`UNLOAD` default to it. Orca start G-code passes `MATERIAL=[filament_type]`.
 - **2026-09-16** — Backed up OrcaSlicer presets to `orca/`; renamed KLP1 machine preset to `- JRL`.
 - **2026-09-16** — Parametrized `LOAD_FILAMENT`/`UNLOAD_FILAMENT`/`M600` by `MATERIAL` (PLA/PETG/ABS) via a `_MAT` temp table; per-call `TEMP`/`PULL_TEMP` overrides.
 - **2026-09-16** — Added `M600` filament change (pause + eject + two-stage resume via Fluidd macro/Resume buttons). Added `[respond]` to printer.cfg (unused by Fluidd; kept for Mainsail popups).
