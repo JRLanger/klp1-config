@@ -1,0 +1,26 @@
+{
+    "compatible_printers": [
+        "Kingroon KLP1 0.4 nozzle - JRL",
+        "Kingroon KLP1 0.4 nozzle"
+    ],
+    "filament_flow_ratio": [
+        "0.98"
+    ],
+    "filament_max_volumetric_speed": [
+        "30"
+    ],
+    "filament_settings_id": [
+        "JRL - Creality Hyper-PETG"
+    ],
+    "from": "User",
+    "inherits": "Generic PETG @System",
+    "is_custom_defined": "0",
+    "name": "JRL - Creality Hyper-PETG",
+    "nozzle_temperature": [
+        "240"
+    ],
+    "nozzle_temperature_initial_layer": [
+        "250"
+    ],
+    "version": "2.3.0.3"
+}

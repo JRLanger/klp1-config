@@ -1,0 +1,26 @@
+{
+    "before_layer_change_gcode": "G92 E0\n",
+    "from": "User",
+    "inherits": "Kingroon KLP1 0.4 nozzle",
+    "layer_change_gcode": "",
+    "machine_end_gcode": "END_PRINT",
+    "machine_start_gcode": "START_PRINT BED_TEMP=[bed_temperature_initial_layer_single] EXTRUDER_TEMP=[nozzle_temperature_initial_layer]",
+    "manual_filament_change": "1",
+    "name": "Kingroon KLP1 0.4 nozzle - JRL",
+    "print_host": "",
+    "printable_area": [
+        "0x0",
+        "216x0",
+        "216x210",
+        "0x210"
+    ],
+    "printable_height": "200",
+    "printer_extruder_id": [
+        "1"
+    ],
+    "printer_extruder_variant": [
+        "Direct Drive Standard"
+    ],
+    "printer_settings_id": "Kingroon KLP1 0.4 nozzle - JRL",
+    "version": "2.3.0.3"
+}

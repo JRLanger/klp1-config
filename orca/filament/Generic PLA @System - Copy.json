@@ -1,0 +1,17 @@
+{
+    "compatible_printers": [
+        "Kingroon KLP1 0.4 nozzle - JRL",
+        "Kingroon KLP1 0.4 nozzle"
+    ],
+    "filament_cost": [
+        "120"
+    ],
+    "filament_settings_id": [
+        "Generic PLA @System - Copy"
+    ],
+    "from": "User",
+    "inherits": "Generic PLA @System",
+    "is_custom_defined": "0",
+    "name": "Generic PLA @System - Copy",
+    "version": "2.3.0.3"
+}

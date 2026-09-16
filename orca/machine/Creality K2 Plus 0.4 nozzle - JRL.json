@@ -1,0 +1,10 @@
+{
+    "from": "User",
+    "host_type": "crealityprint",
+    "inherits": "Creality K2 Plus 0.4 nozzle",
+    "is_custom_defined": "0",
+    "name": "Creality K2 Plus 0.4 nozzle - JRL",
+    "print_host": "",
+    "printer_settings_id": "Creality K2 Plus 0.4 nozzle - JRL",
+    "version": "2.3.1.10"
+}

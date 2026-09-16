@@ -1,0 +1,23 @@
+{
+    "brim_type": "no_brim",
+    "enable_prime_tower": "0",
+    "enable_support": "0",
+    "from": "User",
+    "fuzzy_skin": "external",
+    "fuzzy_skin_point_distance": "0.3",
+    "fuzzy_skin_thickness": "0.2",
+    "inherits": "0.20mm Standard @Kingroon KLP1",
+    "internal_solid_infill_pattern": "rectilinear",
+    "name": "0.20mm Standard @Kingroon KLP1 - Toy Cube",
+    "print_extruder_id": [
+        "1"
+    ],
+    "print_extruder_variant": [
+        "Direct Drive Standard"
+    ],
+    "print_settings_id": "0.20mm Standard @Kingroon KLP1 - Toy Cube",
+    "sparse_infill_density": "10%",
+    "sparse_infill_pattern": "rectilinear",
+    "version": "2.3.0.3",
+    "wall_loops": "5"
+}

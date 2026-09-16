@@ -98,8 +98,13 @@ END_PRINT
 3. `mainsail.cfg` is a symlink on the printer — do not overwrite the symlink; the tracked copy is only a content snapshot.
 4. In Mainsail, click **Save & Restart** (or `FIRMWARE_RESTART`).
 
+## Slicer
+
+OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-code = `START_PRINT BED_TEMP=... EXTRUDER_TEMP=...`, End = `END_PRINT`, Pause = `PAUSE`. Use the `Kingroon KLP1 0.4 nozzle - JRL` preset, not the vendor default.
+
 ## Change log
 
+- **2026-09-16** — Backed up OrcaSlicer presets to `orca/`; renamed KLP1 machine preset to `- JRL`.
 - **2026-09-16** — Parametrized `LOAD_FILAMENT`/`UNLOAD_FILAMENT`/`M600` by `MATERIAL` (PLA/PETG/ABS) via a `_MAT` temp table; per-call `TEMP`/`PULL_TEMP` overrides.
 - **2026-09-16** — Added `M600` filament change (pause + eject + two-stage resume via Fluidd macro/Resume buttons). Added `[respond]` to printer.cfg (unused by Fluidd; kept for Mainsail popups).
 - **2026-09-16** — Enabled pause beeps: `[output_pin beeper]` set to `pwm: True`, added `M300` macro, pause alert = 3 × 1000ms beeps. Verified live.
