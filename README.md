@@ -32,6 +32,7 @@ Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal hel
 | `CALIBRATE_MESH` | `BED_TEMP` (60), `SOAK` (0 min), `PROFILE` ("JRLanger") | Heat bed, optional soak, home, probe mesh, save profile. |
 | `CALIBRATE_SHAPER` | — | Query accelerometer, home, `SHAPER_CALIBRATE`. Review results, then `SAVE_CONFIG` manually. |
 | `BED_TRAM` | `BED_TEMP` (optional) | Home, heat bed if given, `SCREWS_TILT_CALCULATE`, drop bed for screw access. |
+| `M600` | — | Filament change: pause, eject old filament, then load new + two-stage resume (see below). |
 | `LOAD_FILAMENT` | `TEMP` (220), `LENGTH` (50) | Heat, load filament (split into safe chunks). |
 | `UNLOAD_FILAMENT` | `TEMP` (220) | Heat, soften tip, staged retract, disable extruder stepper. |
 | `DISPLAY_MESSAGE` | `MESSAGE` | Print `MESSAGE` to the console; helper for other macros. |
@@ -43,6 +44,17 @@ Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal hel
 - **PAUSE** — retracts, drops the bed (Z lift, clamped below Z max), parks at the back, cools the nozzle to standby (print temp minus `standby_drop`), beeps (if enabled), and extends idle timeout to 12h. Hotend fully off after `heater_off_after` seconds.
 - **RESUME (1st press)** — reheats the nozzle and purges at the purge position. Clean the nozzle, then press RESUME again. `_PAUSE_PURGE` can be run for more purge.
 - **RESUME (2nd press)** — restores idle timeout, returns to the parked height and print position, primes, and continues the print.
+
+## Filament change (M600)
+
+`M600` (sent by the slicer at a filament/color change, or run manually). Fluidd-native flow — no popup:
+
+1. `M600` → pauses, parks, ejects old filament (hotend stays hot while paused).
+2. Insert new filament → click the **`LOAD_FILAMENT`** macro button.
+3. Press **Resume** → reheats + purges. Clean the nozzle. (`_PAUSE_PURGE` for more purge.)
+4. Press **Resume** again → continues the print.
+
+> `printer.cfg` has a `[respond]` section (added for a guided popup). Fluidd doesn't render `action:prompt` dialogs, so `M600` uses the button flow above. The popup would work in Mainsail if you switch UIs; `[respond]` is left in place for that.
 
 ## Slicer G-code
 
@@ -77,6 +89,7 @@ END_PRINT
 
 ## Change log
 
+- **2026-09-16** — Added `M600` filament change (pause + eject + two-stage resume via Fluidd macro/Resume buttons). Added `[respond]` to printer.cfg (unused by Fluidd; kept for Mainsail popups).
 - **2026-09-16** — Enabled pause beeps: `[output_pin beeper]` set to `pwm: True`, added `M300` macro, pause alert = 3 × 1000ms beeps. Verified live.
 - **2026-09-16** — `macros.cfg` rewritten and deployed to the printer: two-stage PAUSE/RESUME (retract, bed-drop, back-park, standby cooling, beep; resume reheat/purge then continue), safe `END_PRINT`/`CANCEL_PRINT`, renamed `G29`/`G30`/`G40` to `CALIBRATE_Z_OFFSET`/`CALIBRATE_MESH`/`CALIBRATE_SHAPER`. Verified live (`FIRMWARE_RESTART` → ready). `mainsail.cfg` refreshed to its true symlink-target content.
 - **2026-09-16** — Initial backup of current machine state. Obico `auth_token` excluded via `.gitignore`.
