@@ -1,0 +1,11 @@
+# Secrets
+moonraker.secrets
+# moonraker-obico.cfg contains the Obico auth_token
+moonraker-obico.cfg
+
+# Klipper SAVE_CONFIG backups
+printer-*.cfg
+
+# Editor / OS
+*.bak
+.DS_Store
