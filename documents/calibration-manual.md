@@ -146,7 +146,9 @@ Judge the top surface only. The side walls do not show the flow error.
 5. Read the pressure advance value for that line.
 6. Write the value in the filament profile. Turn on the pressure advance option.
 
-Do not write a `pressure_advance` value in `printer.cfg`. OrcaSlicer sends the value for each filament.
+Set pressure advance per filament in OrcaSlicer, not per print. `printer.cfg` keeps a small default (`pressure_advance: 0.02`) as a fallback for prints started without the slicer. When a filament profile has pressure advance turned on, OrcaSlicer sends `SET_PRESSURE_ADVANCE` at the start of the print and that value overrides the firmware default at runtime. There is no conflict: the last value sent wins.
+
+Turn on pressure advance in every filament profile. The value from `SET_PRESSURE_ADVANCE` stays active until the next restart. If one profile leaves it off, the value from the last print can carry over. One value per profile avoids this.
 
 ## B5. Retraction
 
