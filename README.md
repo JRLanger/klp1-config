@@ -104,7 +104,13 @@ END_PRINT
 
 OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-code = `START_PRINT BED_TEMP=... EXTRUDER_TEMP=...`, End = `END_PRINT`, Pause = `PAUSE`. Use the `Kingroon KLP1 0.4 nozzle - JRL` preset, not the vendor default.
 
+## Documents
+
+- [Calibration manual](documents/calibration-manual.md) — printer calibration order, per-spool filament calibration, and a command reference.
+
 ## Change log
+
+- **2026-09-17** — Added calibration manual (printer calibration order, filament calibration per spool, command reference).
 
 - **2026-09-16** — `START_PRINT` now stashes `MATERIAL`; bare `M600`/`LOAD`/`UNLOAD` default to it. Orca start G-code passes `MATERIAL=[filament_type]`.
 - **2026-09-16** — Backed up OrcaSlicer presets to `orca/`; renamed KLP1 machine preset to `- JRL`.
