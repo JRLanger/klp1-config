@@ -34,7 +34,7 @@ Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal hel
 | `BED_TRAM` | `BED_TEMP` (optional) | Home, heat bed if given, `SCREWS_TILT_CALCULATE`, drop bed for screw access. |
 | `M600` | `MATERIAL` (PLA) | Filament change: pause, eject, then load new + two-stage resume (see below). |
 | `LOAD_FILAMENT` | `MATERIAL` (PLA), `TEMP`, `LENGTH` (50) | Heat to material temp, load filament (split into safe chunks). |
-| `UNLOAD_FILAMENT` | `MATERIAL` (PLA), `TEMP`, `PULL_TEMP` | Heat, yank from melt zone, cold-pull at the material's pull temp. |
+| `UNLOAD_FILAMENT` | `MODE` (clean), `MATERIAL` (PLA), `TEMP`, `PULL_TEMP` | `clean` = cold-pull maintenance (default). `change` = fast hot eject, stays warm for immediate `LOAD` (used by `M600`). |
 | `_MAT` | (variable) | Per-material temp table (`hot`/`pull`). Edit temps here in one place. |
 
 Material presets (edit in `_MAT`):
@@ -110,6 +110,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-09-18** — `M600` faster: `UNLOAD_FILAMENT` got a `MODE` (`change` = fast hot eject, stays warm for immediate `LOAD`; `clean` = cold-pull, still the default). Removes the cool-to-90 → reheat thermal thrash on filament changes.
 - **2026-09-17** — Added calibration manual (printer calibration order, filament calibration per spool, command reference).
 
 - **2026-09-16** — `START_PRINT` now stashes `MATERIAL`; bare `M600`/`LOAD`/`UNLOAD` default to it. Orca start G-code passes `MATERIAL=[filament_type]`.
