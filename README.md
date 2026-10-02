@@ -21,7 +21,7 @@ Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal hel
 
 | Macro | Parameters (default) | Description |
 |-------|----------------------|-------------|
-| `START_PRINT` | `BED_TEMP` (60), `EXTRUDER_TEMP` (220), `MESH` ("JRLanger") | Preheat nozzle to 150°C, heat bed, home, load mesh profile, heat nozzle, draw purge line. Warns if slicer passes no temps. |
+| `START_PRINT` | `BED_TEMP` (60), `EXTRUDER_TEMP` (220), `MATERIAL` (PLA), `ADAPTIVE` (1), `MESH` ("JRLanger") | Preheat nozzle to 150°C, heat bed, home, mesh, heat nozzle, purge. `ADAPTIVE=1` probes only the area the parts cover; `ADAPTIVE=0` loads the saved `MESH` profile. |
 | `END_PRINT` | — | Heaters + fan off, small retract, raise Z, park center-back, disable steppers. |
 | `CANCEL_PRINT` | — | Heaters + fan off, reset pause timers, restore idle timeout, cancel, retract, raise Z, park back-left, motors off. |
 | `PAUSE` | `Z` (z_lift, default 50) | Retract, drop bed, park at back, cool nozzle to standby, optional beep, idle timeout 12h. |
@@ -30,6 +30,7 @@ Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal hel
 | `_PAUSE_PURGE` | `LENGTH` (30, max 45) | Manual purge at the purge position while paused. |
 | `CALIBRATE_Z_OFFSET` | `BED_TEMP` (optional) | Home, move to bed center, run `PROBE_CALIBRATE`. Adjust with `TESTZ`, `ACCEPT`, then `SAVE_CONFIG`. |
 | `CALIBRATE_MESH` | `BED_TEMP` (60), `SOAK` (0 min), `PROFILE` ("JRLanger") | Heat bed, optional soak, home, probe mesh, save profile. |
+| `_ADAPTIVE_MESH` | `MARGIN` (10) | Probes the print area (from the file's object outlines) plus a margin, at full-mesh density (3x3 to 5x5). Full bed if the file has no object data. Used by `START_PRINT`. |
 | `CALIBRATE_SHAPER` | — | Query accelerometer, home, `SHAPER_CALIBRATE`. Review results, then `SAVE_CONFIG` manually. |
 | `BED_TRAM` | `BED_TEMP` (optional) | Home, heat bed if given, `SCREWS_TILT_CALCULATE`, drop bed for screw access. |
 | `M600` | `MATERIAL` (PLA) | Filament change: pause, eject, then load new + two-stage resume (see below). |
@@ -111,6 +112,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-10-02** — Adaptive bed mesh: `START_PRINT` now probes only the print area every print (`_ADAPTIVE_MESH`, profile `adaptive`, not saved). `ADAPTIVE=0` keeps the old behavior (load the saved `JRLanger` mesh).
 - **2026-10-02** — Added `TEST_MOTION` macro (variable-speed motion test: corners, circles, square, X pattern, Z travel).
 - **2026-09-18** — `M600` faster: `UNLOAD_FILAMENT` got a `MODE` (`change` = fast hot eject, stays warm for immediate `LOAD`; `clean` = cold-pull, still the default). Removes the cool-to-90 → reheat thermal thrash on filament changes.
 - **2026-09-17** — Added calibration manual (printer calibration order, filament calibration per spool, command reference).
