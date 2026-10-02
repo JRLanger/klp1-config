@@ -46,6 +46,7 @@ Material presets (edit in `_MAT`):
 | ABS | 250 | 120 |
 
 Usage: `LOAD_FILAMENT MATERIAL=PETG`, `UNLOAD_FILAMENT MATERIAL=ABS`, `M600 MATERIAL=PETG`. Override per call with `TEMP=`/`PULL_TEMP=`. Unknown/no material falls back to PLA.
+| `TEST_MOTION` | `SPEED` (100), `ACCEL`, `LOOPS` (1), `MARGIN` (15), `CIRCLES` (3), `Z` (1), `Z_SPEED` (15) | Motion test, no heating: center, four corners, circles, square, X pattern, then bed down/up. Blocked during a print. |
 | `DISPLAY_MESSAGE` | `MESSAGE` | Print `MESSAGE` to the console; helper for other macros. |
 
 > Pause beeps are enabled: `[output_pin beeper]` (PC5) runs in `pwm: True` mode and `macros.cfg` defines `M300 S<freq> P<ms>`. The pause alert is 3 × 1000ms beeps at 1kHz.
@@ -110,6 +111,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-10-02** — Added `TEST_MOTION` macro (variable-speed motion test: corners, circles, square, X pattern, Z travel).
 - **2026-09-18** — `M600` faster: `UNLOAD_FILAMENT` got a `MODE` (`change` = fast hot eject, stays warm for immediate `LOAD`; `clean` = cold-pull, still the default). Removes the cool-to-90 → reheat thermal thrash on filament changes.
 - **2026-09-17** — Added calibration manual (printer calibration order, filament calibration per spool, command reference).
 
