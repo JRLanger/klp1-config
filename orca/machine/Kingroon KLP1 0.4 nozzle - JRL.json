@@ -22,5 +22,6 @@
         "Direct Drive Standard"
     ],
     "printer_settings_id": "Kingroon KLP1 0.4 nozzle - JRL",
-    "version": "2.3.0.3"
+    "version": "2.3.0.3",
+    "machine_pause_gcode": "PAUSE RETURN=next"
 }

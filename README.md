@@ -24,7 +24,7 @@ Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal hel
 | `START_PRINT` | `BED_TEMP` (60), `EXTRUDER_TEMP` (220), `MATERIAL` (PLA), `ADAPTIVE` (1), `MESH` ("JRLanger") | Preheat nozzle to 150°C, heat bed, home, mesh, heat nozzle, purge. `ADAPTIVE=1` probes only the area the parts cover; `ADAPTIVE=0` loads the saved `MESH` profile. |
 | `END_PRINT` | — | Heaters + fan off, small retract, raise Z, park center-back, disable steppers. |
 | `CANCEL_PRINT` | — | Heaters + fan off, reset pause timers, restore idle timeout, cancel, retract, raise Z, park back-left, motors off. |
-| `PAUSE` | `Z` (z_lift, default 50) | Retract, drop bed, park at back, cool nozzle to standby, optional beep, idle timeout 12h. |
+| `PAUSE` | `Z` (z_lift, default 50), `RETURN` (exact) | Retract, drop bed, park at back, cool nozzle to standby, beep, idle timeout 12h. `RETURN=next` = on resume, hand back to the file at the corner instead of returning to the pause spot (for slicer pauses; the file travels to its next start). |
 | `RESUME` | — | **Two-stage.** 1st call: reheat + purge (then clean nozzle). 2nd call: restore position, prime, continue print. |
 | `_PAUSE_CFG` | (variables) | Settings holder for PAUSE/RESUME: park pos, z_lift, retract, standby_drop, heater_off_after, purge, beep. Edit values here. |
 | `_PAUSE_PURGE` | `LENGTH` (30, max 45) | Manual purge at the purge position while paused. |
@@ -112,6 +112,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-10-02** — Resume no longer marks the part after filament changes: `M600` (and Orca layer pauses with Pause G-code `PAUSE RETURN=next`) purge at the corner, stay retracted, and let the file travel to its next start. Plain `PAUSE` (button, runout) keeps the exact return. Also re-saves Klipper's `PAUSE_STATE`, whose built-in resume otherwise drives back to the pause spot.
 - **2026-10-02** — Adaptive bed mesh: `START_PRINT` now probes only the print area every print (`_ADAPTIVE_MESH`, profile `adaptive`, not saved). `ADAPTIVE=0` keeps the old behavior (load the saved `JRLanger` mesh).
 - **2026-10-02** — Added `TEST_MOTION` macro (variable-speed motion test: corners, circles, square, X pattern, Z travel).
 - **2026-09-18** — `M600` faster: `UNLOAD_FILAMENT` got a `MODE` (`change` = fast hot eject, stays warm for immediate `LOAD`; `clean` = cold-pull, still the default). Removes the cool-to-90 → reheat thermal thrash on filament changes.
