@@ -109,9 +109,11 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 ## Documents
 
 - [Calibration manual](documents/calibration-manual.md) — printer calibration order, per-spool filament calibration, and a command reference.
+- [Printer system setup](documents/printer-system-setup.md) — changes to the printer's operating system (clock and time zone, package sources, system update), why each was needed, and how to redo them after a reflash.
 
 ## Change log
 
+- **2026-10-02** — Added printer system setup document (clock and time zone fix, Debian archive sources, system update, vnStat reset, harmless boot errors).
 - **2026-10-02** — Unload jam, round 2: the hot unload still waited ~15 s for the nozzle to settle at unload temp while Orca's 2 mm retraction sat in the heatbreak. `change` mode now starts at once when already within 20 °C. Pull lengthened from 60 to 100 mm (`LENGTH=`) so the tip clears the gears instead of being pulled out by hand.
 - **2026-10-02** — Fix filament-change jams (heat creep): `M600` and runout no longer retract far and cool before unloading. They park hot and unload hot right away (fan off, one continuous 60 mm pull), then cool to standby. Default pause retract 3 → 1 mm. Runout uses a hot unload instead of a cold pull. Hotend-off timer re-armed after the unload.
 - **2026-10-02** — Resume no longer marks the part after filament changes: `M600` (and Orca layer pauses with Pause G-code `PAUSE RETURN=next`) purge at the corner, stay retracted, and let the file travel to its next start. Plain `PAUSE` (button, runout) keeps the exact return. Also re-saves Klipper's `PAUSE_STATE`, whose built-in resume otherwise drives back to the pause spot.
