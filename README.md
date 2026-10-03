@@ -35,7 +35,7 @@ Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal hel
 | `BED_TRAM` | `BED_TEMP` (optional) | Home, heat bed if given, `SCREWS_TILT_CALCULATE`, drop bed for screw access. |
 | `M600` | `MATERIAL` (PLA) | Filament change: pause, eject, then load new + two-stage resume (see below). |
 | `LOAD_FILAMENT` | `MATERIAL` (PLA), `TEMP`, `LENGTH` (50) | Heat to material temp, load filament (split into safe chunks). |
-| `UNLOAD_FILAMENT` | `MODE` (clean), `MATERIAL` (PLA), `TEMP`, `PULL_TEMP`, `LENGTH` (100) | `clean` = cold-pull maintenance (default). `change` = fast hot eject, starts at once if the nozzle is already hot (used by `M600` and runout). Pulls `LENGTH` mm total. |
+| `UNLOAD_FILAMENT` | `MODE` (change when paused, clean when idle), `MATERIAL` (PLA), `TEMP`, `PULL_TEMP`, `LENGTH` (100) | `change` = fast hot eject, starts at once if the nozzle is already hot. `clean` = cold-pull maintenance. While paused, the nozzle returns to standby afterwards and the hotend-off timer restarts. Pulls `LENGTH` mm total. |
 | `_MAT` | (variable) | Per-material temp table (`hot`/`pull`). Edit temps here in one place. |
 
 Material presets (edit in `_MAT`):
@@ -113,6 +113,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-10-03** — `UNLOAD_FILAMENT` defaults to the fast `change` mode while paused (the Fluidd button ran a cold pull mid-print). After any unload during a pause the nozzle returns to standby and the hotend-off timer restarts. Synced the `SAVE_CONFIG` block from the printer: z_offset 1.060 → 1.310 (intentional) and the saved `adaptive` mesh.
 - **2026-10-02** — Added printer system setup document (clock and time zone fix, Debian archive sources, system update, vnStat reset, harmless boot errors).
 - **2026-10-02** — Unload jam, round 2: the hot unload still waited ~15 s for the nozzle to settle at unload temp while Orca's 2 mm retraction sat in the heatbreak. `change` mode now starts at once when already within 20 °C. Pull lengthened from 60 to 100 mm (`LENGTH=`) so the tip clears the gears instead of being pulled out by hand.
 - **2026-10-02** — Fix filament-change jams (heat creep): `M600` and runout no longer retract far and cool before unloading. They park hot and unload hot right away (fan off, one continuous 60 mm pull), then cool to standby. Default pause retract 3 → 1 mm. Runout uses a hot unload instead of a cold pull. Hotend-off timer re-armed after the unload.
