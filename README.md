@@ -112,6 +112,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-10-02** — Fix filament-change jams (heat creep): `M600` and runout no longer retract far and cool before unloading. They park hot and unload hot right away (fan off, one continuous 60 mm pull), then cool to standby. Default pause retract 3 → 1 mm. Runout uses a hot unload instead of a cold pull. Hotend-off timer re-armed after the unload.
 - **2026-10-02** — Resume no longer marks the part after filament changes: `M600` (and Orca layer pauses with Pause G-code `PAUSE RETURN=next`) purge at the corner, stay retracted, and let the file travel to its next start. Plain `PAUSE` (button, runout) keeps the exact return. Also re-saves Klipper's `PAUSE_STATE`, whose built-in resume otherwise drives back to the pause spot.
 - **2026-10-02** — Adaptive bed mesh: `START_PRINT` now probes only the print area every print (`_ADAPTIVE_MESH`, profile `adaptive`, not saved). `ADAPTIVE=0` keeps the old behavior (load the saved `JRLanger` mesh).
 - **2026-10-02** — Added `TEST_MOTION` macro (variable-speed motion test: corners, circles, square, X pattern, Z travel).
