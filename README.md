@@ -35,7 +35,7 @@ Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal hel
 | `BED_TRAM` | `BED_TEMP` (optional) | Home, heat bed if given, `SCREWS_TILT_CALCULATE`, drop bed for screw access. |
 | `M600` | `MATERIAL` (PLA) | Filament change: pause, eject, then load new + two-stage resume (see below). |
 | `LOAD_FILAMENT` | `MATERIAL` (PLA), `TEMP`, `LENGTH` (50) | Heat to material temp, load filament (split into safe chunks). |
-| `UNLOAD_FILAMENT` | `MODE` (clean), `MATERIAL` (PLA), `TEMP`, `PULL_TEMP` | `clean` = cold-pull maintenance (default). `change` = fast hot eject, stays warm for immediate `LOAD` (used by `M600`). |
+| `UNLOAD_FILAMENT` | `MODE` (clean), `MATERIAL` (PLA), `TEMP`, `PULL_TEMP`, `LENGTH` (100) | `clean` = cold-pull maintenance (default). `change` = fast hot eject, starts at once if the nozzle is already hot (used by `M600` and runout). Pulls `LENGTH` mm total. |
 | `_MAT` | (variable) | Per-material temp table (`hot`/`pull`). Edit temps here in one place. |
 
 Material presets (edit in `_MAT`):
@@ -112,6 +112,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-10-02** — Unload jam, round 2: the hot unload still waited ~15 s for the nozzle to settle at unload temp while Orca's 2 mm retraction sat in the heatbreak. `change` mode now starts at once when already within 20 °C. Pull lengthened from 60 to 100 mm (`LENGTH=`) so the tip clears the gears instead of being pulled out by hand.
 - **2026-10-02** — Fix filament-change jams (heat creep): `M600` and runout no longer retract far and cool before unloading. They park hot and unload hot right away (fan off, one continuous 60 mm pull), then cool to standby. Default pause retract 3 → 1 mm. Runout uses a hot unload instead of a cold pull. Hotend-off timer re-armed after the unload.
 - **2026-10-02** — Resume no longer marks the part after filament changes: `M600` (and Orca layer pauses with Pause G-code `PAUSE RETURN=next`) purge at the corner, stay retracted, and let the file travel to its next start. Plain `PAUSE` (button, runout) keeps the exact return. Also re-saves Klipper's `PAUSE_STATE`, whose built-in resume otherwise drives back to the pause spot.
 - **2026-10-02** — Adaptive bed mesh: `START_PRINT` now probes only the print area every print (`_ADAPTIVE_MESH`, profile `adaptive`, not saved). `ADAPTIVE=0` keeps the old behavior (load the saved `JRLanger` mesh).
