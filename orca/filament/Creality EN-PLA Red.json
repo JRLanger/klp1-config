@@ -3,24 +3,29 @@
         "Kingroon KLP1 0.4 nozzle - JRL",
         "Kingroon KLP1 0.4 nozzle"
     ],
-    "filament_flow_ratio": [
-        "0.98"
+    "filament_cost": [
+        "120"
+    ],
+    "filament_extruder_variant": [
+        "Direct Drive Standard"
     ],
     "filament_max_volumetric_speed": [
-        "30"
+        "75"
     ],
     "filament_settings_id": [
-        "JRL - Creality Hyper-PETG"
+        "Creality EN-PLA Red"
     ],
     "from": "User",
-    "inherits": "Generic PETG @System",
-    "is_custom_defined": "0",
-    "name": "JRL - Creality Hyper-PETG",
+    "inherits": "Generic PLA @System",
+    "name": "Creality EN-PLA Red",
     "nozzle_temperature": [
-        "240"
+        "210"
     ],
     "nozzle_temperature_initial_layer": [
-        "250"
+        "215"
+    ],
+    "slow_down_layer_time": [
+        "0"
     ],
     "version": "2.3.0.3"
 }

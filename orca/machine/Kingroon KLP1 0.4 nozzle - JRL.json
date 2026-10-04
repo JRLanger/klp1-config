@@ -1,9 +1,11 @@
 {
     "before_layer_change_gcode": "G92 E0\n",
+    "change_filament_gcode": "M600",
     "from": "User",
     "inherits": "Kingroon KLP1 0.4 nozzle",
     "layer_change_gcode": "",
     "machine_end_gcode": "END_PRINT",
+    "machine_pause_gcode": "PAUSE RETURN=next",
     "machine_start_gcode": "START_PRINT BED_TEMP=[bed_temperature_initial_layer_single] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] MATERIAL=[filament_type]",
     "manual_filament_change": "1",
     "name": "Kingroon KLP1 0.4 nozzle - JRL",
@@ -22,6 +24,8 @@
         "Direct Drive Standard"
     ],
     "printer_settings_id": "Kingroon KLP1 0.4 nozzle - JRL",
-    "version": "2.3.0.3",
-    "machine_pause_gcode": "PAUSE RETURN=next"
+    "retract_length_toolchange": [
+        "0.6"
+    ],
+    "version": "2.3.0.3"
 }
