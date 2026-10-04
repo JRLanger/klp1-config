@@ -22,14 +22,14 @@ Related documents:
 
 | # | Item | Why |
 | --- | --- | --- |
-| 1 | **Set Orca's Pause G-code to `PAUSE RETURN=next`.** | The live Orca profile has no Pause G-code of its own, so it uses the vendor default `M601`. `M601` is not defined in `macros.cfg`. Klipper prints `Unknown command:"M601"` and keeps printing, so a layer pause is skipped. The file printed on 2026-10-03 still had `PAUSE` because it was sliced before the profile changed. Alternative: enable the `M601` macro in `macros.cfg` and make it call `PAUSE RETURN=next`. |
+| 1 | Run Orca's max volumetric speed test (manual B2) for `Creality EN-PLA Red`. | Its preset allows 75 mm³/s, far above what this hotend melts. Fast moves would under-extrude. It also has `slow_down_layer_time` 0, which turns off the slow-down for small layers. |
 | 2 | Watch whether the jams return with the new toolhead ([5.12](#512-filament-jams-during-filament-change-heat-creep)). | If they stop, the old toolhead was the cause (fan, heatsink or heatbreak). If they return, suspect the filament. Inspect the old toolhead before it goes back in the spares box. |
 | 3 | Calibrate flow and pressure advance per filament (calibration manual B3, B4) if not done yet. | New nozzle and extruder. |
 | 4 | Watch the first filament change after the repair. | Confirm a clean, fast unload and that `RESUME RETURN=next` leaves no mark ([5.9](#59-resume-left-a-mark-on-the-part)). Tune `resume_retract` (2.0 mm) if needed. |
 | 5 | Test `TEST_MOTION` above 100 mm/s. | Only 50 and 100 mm/s were run. Arcs above about 300 mm/s can overload the host (`Timer too close`). |
 | 6 | Decide on restart and shutdown macros. | The user asked. The answer: Fluidd already has host reboot and shutdown in its power menu. Macro buttons need the `gcode_shell_command` extension plus a sudoers rule. Not done. |
 
-Orca's color-change retraction (`retract_length_toolchange`) is now 0.6 mm in the live profile. Tonight's file used 2 mm. Re-slice files that contain color changes so that they use the new value.
+The KLP1 Orca preset now sets Pause G-code `PAUSE RETURN=next` and color-change retraction 0.6 mm (2026-10-04). Files sliced before that use `M601` (skipped) or 2 mm. Re-slice them.
 
 ---
 
@@ -111,7 +111,7 @@ Left as is: `fluidd.cfg` (not included anywhere), Moonraker open to the LAN, X/Y
 ### 5.7 OrcaSlicer (2026-09-16 to 2026-10-02)
 
 - The vendor preset `Kingroon KLP1 0.4 nozzle` has wrong start G-code and a 230 × 230 bed. Use the `- JRL` preset only.
-- Start: `START_PRINT BED_TEMP=[bed_temperature_initial_layer_single] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] MATERIAL=[filament_type]`. End: `END_PRINT`. Change filament: `M600`. Pause: **must be `PAUSE RETURN=next`** (see open item 1).
+- Start: `START_PRINT BED_TEMP=[bed_temperature_initial_layer_single] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] MATERIAL=[filament_type]`. End: `END_PRINT`. Change filament: `M600`. Pause: `PAUSE RETURN=next` (set 2026-10-04). Color-change retraction: 0.6 mm. If a field shows the reset arrow and is reset, Orca falls back to the vendor values (`M601`, 2 mm).
 - Pressure advance is off in Orca. The firmware has `pressure_advance: 0.02` as a fallback. The calibration manual explains how per-filament values override it.
 - The preset was renamed from `- Copy` to `- JRL` by editing the JSON files while Orca was closed. Orca does not allow a user preset to take a vendor preset's name.
 - Measured over 16 prints: Orca's time estimate is within 3 % (median). Long waits come from pauses and the start sequence.
