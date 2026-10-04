@@ -1,6 +1,6 @@
 # KLP1 Session Handoff
 
-Snapshot: 2026-10-04. This document lists every change made to the printer from 2026-09-16 to 2026-10-04, the problems found, their causes, and the fixes. Use it to continue the work in a new session.
+Snapshot: 2026-10-04, evening. This document lists every change made to the printer from 2026-09-16 to 2026-10-04, the problems found, their causes, and the fixes. Use it to continue the work in a new session.
 
 Related documents:
 
@@ -12,7 +12,7 @@ Related documents:
 
 ## 1. Current state
 
-**The printer works again.** On 2026-10-03 at 19:49 a filament change (`M600`) jammed the filament in the hotend, and the print `Letras_3D_PLA_2h51m` was lost. On 2026-10-04 the user replaced the whole toolhead with a spare and recalibrated it ([5.16](#516-toolhead-replaced-2026-10-04)).
+**Jammed again, root cause found.** On 2026-10-03 and again on 2026-10-04 (with the new toolhead) a filament change (`M600`) jammed the extruder. Both prints `Letras_3D_PLA` were lost. The user found a hardened blob in the extruder's gear chamber, above the heatbreak. The cause was the hot unload ([5.12](#512-filament-jams-during-filament-change-solved-2026-10-04)). The cold-pull unload is deployed and loaded. The user must clear the blob from the extruder before the next print.
 
 **Repository.** The local folder, the GitHub repository and the files on the printer match. The repository is public. It contains no secrets and no LAN addresses.
 
@@ -23,9 +23,9 @@ Related documents:
 | # | Item | Why |
 | --- | --- | --- |
 | 1 | Run Orca's max volumetric speed test (manual B2) for `Creality EN-PLA Red`. | Its preset allows 75 mm³/s, far above what this hotend melts. Fast moves would under-extrude. It also has `slow_down_layer_time` 0, which turns off the slow-down for small layers. |
-| 2 | Watch whether the jams return with the new toolhead ([5.12](#512-filament-jams-during-filament-change-heat-creep)). | If they stop, the old toolhead was the cause (fan, heatsink or heatbreak). If they return, suspect the filament. Inspect the old toolhead before it goes back in the spares box. |
+| 2 | Watch the next filament changes with the cold pull ([5.12](#512-filament-jams-during-filament-change-solved-2026-10-04)). | The fix replaces the hot unload. Check that the tip comes out hard, thin and without a blob. If the cooldown is too slow, a faster hot variant (tip forming) is possible, but it needs the toolhead dimensions (nozzle tip to top of heater block, to top of heatsink, to the gears). |
 | 3 | Calibrate flow and pressure advance per filament (calibration manual B3, B4) if not done yet. | New nozzle and extruder. |
-| 4 | Watch the first filament change after the repair. | Confirm a clean, fast unload and that `RESUME RETURN=next` leaves no mark ([5.9](#59-resume-left-a-mark-on-the-part)). Tune `resume_retract` (2.0 mm) if needed. |
+| 4 | Check that `RESUME RETURN=next` leaves no mark after a filament change ([5.9](#59-resume-left-a-mark-on-the-part)). | Tune `resume_retract` (2.0 mm) if needed. |
 | 5 | Test `TEST_MOTION` above 100 mm/s. | Only 50 and 100 mm/s were run. Arcs above about 300 mm/s can overload the host (`Timer too close`). |
 | 6 | Decide on restart and shutdown macros. | The user asked. The answer: Fluidd already has host reboot and shutdown in its power menu. Macro buttons need the `gcode_shell_command` extension plus a sudoers rule. Not done. |
 
@@ -95,7 +95,7 @@ The permission system asks for approval before Claude writes to the printer over
 
 | Problem | Fix |
 | --- | --- |
-| The runout `runout_gcode` parked and reheated, which conflicted with the new `PAUSE` | Rewritten. See [5.12](#512-filament-jams-during-filament-change-heat-creep) for the current version. |
+| The runout `runout_gcode` parked and reheated, which conflicted with the new `PAUSE` | Rewritten. See [5.12](#512-filament-jams-during-filament-change-solved-2026-10-04) for the current version. |
 | `CALIBRATE_Z_OFFSET` probed with the bed mesh active | `BED_MESH_CLEAR` after `G28`. |
 | `max_accel: 20000`, but homing reset it to 5000 | `max_accel: 6000`. `homing_override.cfg` restores the configured value. |
 | Every `G28` loaded mesh `default` | Removed. `START_PRINT` handles the mesh. |
@@ -140,21 +140,32 @@ Left as is: `fluidd.cfg` (not included anywhere), Moonraker open to the LAN, X/Y
 - The mesh goes to profile `adaptive`. After each print Fluidd offers `SAVE_CONFIG`. Ignore it. A save on 2026-10-03 stored the `adaptive` profile in `printer.cfg`, which is harmless.
 - `START_PRINT ADAPTIVE=0` loads the saved `JRLanger` mesh instead.
 
-### 5.12 Filament jams during filament change (heat creep)
+### 5.12 Filament jams during filament change (solved 2026-10-04)
 
-The same jam happened 4 times. The tip forms a bulge in the heatbreak and stops moving in both directions. The user's current PLA is the most affected.
+The same jam happened 5 times. Rounds 1–3 assumed heat creep in the heatbreak. That was wrong. Round 4 found the real cause.
+
+**Root cause:** the hot unload (`MODE=change`, added 2026-09-18) pulled the filament out at 25–40 mm/s with the nozzle at 220 °C. The soft tip reached the extruder gears in about 2 s, before it could harden. The gears squashed it into a blob wider than the path above them, and the blob hardened in the gear chamber. Heating the nozzle cannot free it, because the gear chamber stays cold. The user found the blob there after the jam of 2026-10-04.
+
+Evidence:
+
+- Logs: 15 filament changes with the hot unload between 2026-10-01 and 10-04. 10 resumed and 5 did not, which matches the 5 jams the user reported. The jams started when the user changed to the current PLA. The hot unload worked about 2 times in 3, so one good change proves nothing.
+- The jam repeated with a new toolhead, so the old toolhead was not the cause.
+- Kingroon's stock unload never pulls a hot tip through the gears. It snaps 27 mm at 150 mm/s, cools to 62 °C, then pulls at 5 mm/s.
+- Multi-material tip forming (SuperSlicer, Happy Hare) does the same in principle: fast separation, then the tip hardens in the cold zone before the eject.
 
 | Round | Date | Cause found | Fix |
 | --- | --- | --- | --- |
 | 0 | 2026-09-18 | `M600` used the cold pull: cool to 90 °C, then reheat | `UNLOAD_FILAMENT MODE=change` (fast and hot). `clean` stays for maintenance. Part fan at 100 % during cold-pull cooling. |
 | 1 | 2026-10-02 | Orca retracted 2 mm, then `PAUSE` retracted 3 mm more and cooled with the fan at 100 %. The tip froze in the heatbreak. | `M600` calls `PAUSE RETURN=next RETRACT=0 COOL=0`. Pause retract 3 → 1 mm. Fan off during the unload. Standby only after the filament is out. Runout pauses without cooling and unloads hot. |
 | 2 | 2026-10-02 | The unload waited about 15 s for 215 → 220 °C to settle, with the tip in the heatbreak | Start at once when within 20 °C of the target. Pull 100 mm in total (`LENGTH=`). |
-| 3 | 2026-10-03 | The sequence ran correctly (210–224 °C, 8 s, no errors) but the filament did not move. It was already stuck. | Toolhead replaced ([5.16](#516-toolhead-replaced-2026-10-04)). See open item 2. |
+| 3 | 2026-10-03 | The sequence ran correctly (210–224 °C, 8 s, no errors) but the filament did not move. It was already stuck. | Toolhead replaced ([5.16](#516-toolhead-replaced-2026-10-04)). |
+| 4 | 2026-10-04 | Jam again with the new toolhead. Blob found in the gear chamber, above the heatbreak. | `UNLOAD_FILAMENT` is always a cold pull: E+10 at 5 mm/s, E−15 at 80 mm/s, E−12 at 18 mm/s (tip parked 27 mm up, below the gears), part fan 100 %, cool to `PULL_TEMP` (PLA 90 °C), then pull the rest at 5 mm/s. `MODE` removed. |
 
 ### 5.13 Unload button ran a cold pull during a pause (2026-10-03)
 
 - The `UNLOAD_FILAMENT` button sends no `MODE`, so it ran the cold pull mid-print. It left the nozzle at 90 °C and cancelled the hotend-off timer.
 - Fix (loaded 2026-10-03 at power-on): while paused, the default mode is `change`. While idle, it is `clean`. After any unload during a pause, the nozzle returns to standby and the 30-minute hotend-off timer restarts.
+- Superseded 2026-10-04: `MODE` is gone and every unload is a cold pull. The standby and timer behavior after an unload during a pause stays.
 
 ### 5.14 Idle timeout
 
@@ -196,7 +207,7 @@ Lesson: after `FIRMWARE_RESTART` Klipper is in absolute extrusion mode (`M82`). 
 - `max_extrude_only_distance` is 100 mm. Split long extruder moves into moves of 45 mm or less.
 - `SAVE_CONFIG` restarts Klipper. Never run it during a print.
 - Klipper v0.11 limits: no `ADAPTIVE=1`. The `BED_MESH_CALIBRATE` overrides (`MESH_MIN`, `MESH_MAX`, `PROBE_COUNT`) reset after each call.
-- A long retract (more than about 1–2 mm) with a pause or a cool-down jams this hotend.
+- Never pull a hot, soft tip through the extruder gears. Let it harden in the cold zone first (cold pull). A hot pull squashes the tip into a blob that locks the gear chamber.
 
 ---
 

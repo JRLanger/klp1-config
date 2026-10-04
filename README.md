@@ -35,7 +35,7 @@ Defined in [`macros.cfg`](macros.cfg). Macros starting with `_` are internal hel
 | `BED_TRAM` | `BED_TEMP` (optional) | Home, heat bed if given, `SCREWS_TILT_CALCULATE`, drop bed for screw access. |
 | `M600` | `MATERIAL` (PLA) | Filament change: pause, eject, then load new + two-stage resume (see below). |
 | `LOAD_FILAMENT` | `MATERIAL` (PLA), `TEMP`, `LENGTH` (50) | Heat to material temp, load filament (split into safe chunks). |
-| `UNLOAD_FILAMENT` | `MODE` (change when paused, clean when idle), `MATERIAL` (PLA), `TEMP`, `PULL_TEMP`, `LENGTH` (100) | `change` = fast hot eject, starts at once if the nozzle is already hot. `clean` = cold-pull maintenance. While paused, the nozzle returns to standby afterwards and the hotend-off timer restarts. Pulls `LENGTH` mm total. |
+| `UNLOAD_FILAMENT` | `MATERIAL` (PLA), `TEMP`, `PULL_TEMP`, `LENGTH` (100) | Cold pull: melts a fresh tip, snaps it 27 mm up into the cold zone, cools the nozzle to `PULL_TEMP` with the part fan (about 1 min), then pulls slowly. A hot pull jams the gears (see change log 2026-10-04). While paused, the nozzle returns to standby afterwards and the hotend-off timer restarts. Pulls `LENGTH` mm total. |
 | `_MAT` | (variable) | Per-material temp table (`hot`/`pull`). Edit temps here in one place. |
 
 Material presets (edit in `_MAT`):
@@ -62,7 +62,7 @@ Usage: `LOAD_FILAMENT MATERIAL=PETG`, `UNLOAD_FILAMENT MATERIAL=ABS`, `M600 MATE
 
 `M600` (sent by the slicer at a filament/color change, or run manually). Fluidd-native flow — no popup:
 
-1. `M600` → pauses, parks, ejects old filament (hotend stays hot while paused).
+1. `M600` → pauses, parks, ejects old filament with a cold pull (about 1¾ min: the nozzle cools to the pull temperature, then returns to standby). Wait for the message before you pull the filament out.
 2. Insert new filament → click the **`LOAD_FILAMENT`** macro button.
 3. Press **Resume** → reheats + purges. Clean the nozzle. (`_PAUSE_PURGE` for more purge.)
 4. Press **Resume** again → continues the print.
@@ -114,6 +114,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-10-04** — Filament-change jams, root cause: the hot unload (`MODE=change`) pulled the soft tip into the extruder's gear chamber, where it squashed into a blob and locked the gears. Found by the user inside the extruder body, above the heatbreak. It happened with a new toolhead too. `UNLOAD_FILAMENT` is now always a cold pull, like the Kingroon stock macro: snap the tip 27 mm into the cold zone, cool to the pull temperature, then pull at 5 mm/s. `MODE` removed. `M600` and the runout sensor use it. Costs about 1¾ min per change.
 - **2026-10-04** — Replaced the toolhead with a spare after the heat-creep jams. Recalibrated: hotend PID (Kp 32.379, Ki 4.693, Kd 55.852), Z offset 1.310 → 0.450, `JRLanger` mesh. Extruder `rotation_distance` stays 23 (verified: 50 mm commanded = 50 mm moved).
 - **2026-10-03** — `UNLOAD_FILAMENT` defaults to the fast `change` mode while paused (the Fluidd button ran a cold pull mid-print). After any unload during a pause the nozzle returns to standby and the hotend-off timer restarts. Synced the `SAVE_CONFIG` block from the printer: z_offset 1.060 → 1.310 (intentional) and the saved `adaptive` mesh.
 - **2026-10-02** — Added printer system setup document (clock and time zone fix, Debian archive sources, system update, vnStat reset, harmless boot errors).
