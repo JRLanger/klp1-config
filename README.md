@@ -114,6 +114,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-10-04** — Replaced the toolhead with a spare after the heat-creep jams. Recalibrated: hotend PID (Kp 32.379, Ki 4.693, Kd 55.852), Z offset 1.310 → 0.450, `JRLanger` mesh. Extruder `rotation_distance` stays 23 (verified: 50 mm commanded = 50 mm moved).
 - **2026-10-03** — `UNLOAD_FILAMENT` defaults to the fast `change` mode while paused (the Fluidd button ran a cold pull mid-print). After any unload during a pause the nozzle returns to standby and the hotend-off timer restarts. Synced the `SAVE_CONFIG` block from the printer: z_offset 1.060 → 1.310 (intentional) and the saved `adaptive` mesh.
 - **2026-10-02** — Added printer system setup document (clock and time zone fix, Debian archive sources, system update, vnStat reset, harmless boot errors).
 - **2026-10-02** — Unload jam, round 2: the hot unload still waited ~15 s for the nozzle to settle at unload temp while Orca's 2 mm retraction sat in the heatbreak. `change` mode now starts at once when already within 20 °C. Pull lengthened from 60 to 100 mm (`LENGTH=`) so the tip clears the gears instead of being pulled out by hand.

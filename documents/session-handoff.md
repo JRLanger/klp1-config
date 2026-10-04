@@ -1,6 +1,6 @@
 # KLP1 Session Handoff
 
-Snapshot: 2026-10-03, evening. This document lists every change made to the printer from 2026-09-16 to 2026-10-03, the problems found, their causes, and the fixes. Use it to continue the work in a new session.
+Snapshot: 2026-10-04. This document lists every change made to the printer from 2026-09-16 to 2026-10-04, the problems found, their causes, and the fixes. Use it to continue the work in a new session.
 
 Related documents:
 
@@ -12,11 +12,9 @@ Related documents:
 
 ## 1. Current state
 
-**The printer is out of service.** On 2026-10-03 at 19:49 a filament change (`M600`) jammed the filament in the hotend. Pushing and pulling by hand at 220 °C did not move it. The user is opening the toolhead to clean it. The print `Letras_3D_PLA_2h51m` (paused at 5 %) is lost.
+**The printer works again.** On 2026-10-03 at 19:49 a filament change (`M600`) jammed the filament in the hotend, and the print `Letras_3D_PLA_2h51m` was lost. On 2026-10-04 the user replaced the whole toolhead with a spare and recalibrated it ([5.16](#516-toolhead-replaced-2026-10-04)).
 
-**Waiting to load.** `macros.cfg` on the printer has a change that Klipper has not loaded yet (see [5.13](#513-unload-button-ran-a-cold-pull-during-a-pause)). The file was copied without a restart because the heaters were in use. Klipper loads it at the next `FIRMWARE_RESTART` or power-on.
-
-**Repository.** The local folder, the GitHub repository and the files on the printer match (commit `c9e11fa` plus this document). The repository is public. It contains no secrets and no LAN addresses.
+**Repository.** The local folder, the GitHub repository and the files on the printer match. The repository is public. It contains no secrets and no LAN addresses.
 
 ---
 
@@ -24,14 +22,12 @@ Related documents:
 
 | # | Item | Why |
 | --- | --- | --- |
-| 1 | **Set Orca's Pause G-code to `PAUSE RETURN=next`.** | The live Orca profile has no Pause G-code of its own, so it uses the vendor default `M601`. `M601` is not defined in `macros.cfg`. Klipper prints `Unknown command:"M601"` and keeps printing, so a layer pause is skipped. The file printed tonight still had `PAUSE` because it was sliced before the profile changed. Alternative: enable the `M601` macro in `macros.cfg` and make it call `PAUSE RETURN=next`. |
-| 2 | After the toolhead is back together: run `FIRMWARE_RESTART`. | Loads the new `UNLOAD_FILAMENT` ([5.13](#513-unload-button-ran-a-cold-pull-during-a-pause)). |
-| 3 | Calibrate the Z offset again (calibration manual A3 and A4). | Disassembly changes the nozzle height. The saved value 1.310 is no longer valid. |
-| 4 | Run a hotend PID tune at 210 °C if the nozzle, heater or thermistor was replaced. | |
-| 5 | Find the cause of the heat-creep jams ([5.12](#512-filament-jams-during-filament-change-heat-creep)). | The macros now run correctly, but the 4th jam happened anyway. Check the hotend fan, the heatsink fins, the heatbreak seating, and the filament brand. |
-| 6 | Watch the first filament change after the repair. | Confirm a clean, fast unload and that `RESUME RETURN=next` leaves no mark ([5.9](#59-resume-left-a-mark-on-the-part)). Tune `resume_retract` (2.0 mm) if needed. |
-| 7 | Test `TEST_MOTION` above 100 mm/s. | Only 50 and 100 mm/s were run. Arcs above about 300 mm/s can overload the host (`Timer too close`). |
-| 8 | Decide on restart and shutdown macros. | The user asked. The answer: Fluidd already has host reboot and shutdown in its power menu. Macro buttons need the `gcode_shell_command` extension plus a sudoers rule. Not done. |
+| 1 | **Set Orca's Pause G-code to `PAUSE RETURN=next`.** | The live Orca profile has no Pause G-code of its own, so it uses the vendor default `M601`. `M601` is not defined in `macros.cfg`. Klipper prints `Unknown command:"M601"` and keeps printing, so a layer pause is skipped. The file printed on 2026-10-03 still had `PAUSE` because it was sliced before the profile changed. Alternative: enable the `M601` macro in `macros.cfg` and make it call `PAUSE RETURN=next`. |
+| 2 | Watch whether the jams return with the new toolhead ([5.12](#512-filament-jams-during-filament-change-heat-creep)). | If they stop, the old toolhead was the cause (fan, heatsink or heatbreak). If they return, suspect the filament. Inspect the old toolhead before it goes back in the spares box. |
+| 3 | Calibrate flow and pressure advance per filament (calibration manual B3, B4) if not done yet. | New nozzle and extruder. |
+| 4 | Watch the first filament change after the repair. | Confirm a clean, fast unload and that `RESUME RETURN=next` leaves no mark ([5.9](#59-resume-left-a-mark-on-the-part)). Tune `resume_retract` (2.0 mm) if needed. |
+| 5 | Test `TEST_MOTION` above 100 mm/s. | Only 50 and 100 mm/s were run. Arcs above about 300 mm/s can overload the host (`Timer too close`). |
+| 6 | Decide on restart and shutdown macros. | The user asked. The answer: Fluidd already has host reboot and shutdown in its power menu. Macro buttons need the `gcode_shell_command` extension plus a sudoers rule. Not done. |
 
 Orca's color-change retraction (`retract_length_toolchange`) is now 0.6 mm in the live profile. Tonight's file used 2 mm. Re-slice files that contain color changes so that they use the new value.
 
@@ -153,12 +149,12 @@ The same jam happened 4 times. The tip forms a bulge in the heatbreak and stops 
 | 0 | 2026-09-18 | `M600` used the cold pull: cool to 90 °C, then reheat | `UNLOAD_FILAMENT MODE=change` (fast and hot). `clean` stays for maintenance. Part fan at 100 % during cold-pull cooling. |
 | 1 | 2026-10-02 | Orca retracted 2 mm, then `PAUSE` retracted 3 mm more and cooled with the fan at 100 %. The tip froze in the heatbreak. | `M600` calls `PAUSE RETURN=next RETRACT=0 COOL=0`. Pause retract 3 → 1 mm. Fan off during the unload. Standby only after the filament is out. Runout pauses without cooling and unloads hot. |
 | 2 | 2026-10-02 | The unload waited about 15 s for 215 → 220 °C to settle, with the tip in the heatbreak | Start at once when within 20 °C of the target. Pull 100 mm in total (`LENGTH=`). |
-| 3 | 2026-10-03 | The sequence ran correctly (210–224 °C, 8 s, no errors) but the filament did not move. It was already stuck. | Not solved. See open item 5. |
+| 3 | 2026-10-03 | The sequence ran correctly (210–224 °C, 8 s, no errors) but the filament did not move. It was already stuck. | Toolhead replaced ([5.16](#516-toolhead-replaced-2026-10-04)). See open item 2. |
 
 ### 5.13 Unload button ran a cold pull during a pause (2026-10-03)
 
 - The `UNLOAD_FILAMENT` button sends no `MODE`, so it ran the cold pull mid-print. It left the nozzle at 90 °C and cancelled the hotend-off timer.
-- Fix (copied, **not loaded yet**): while paused, the default mode is `change`. While idle, it is `clean`. After any unload during a pause, the nozzle returns to standby and the 30-minute hotend-off timer restarts.
+- Fix (loaded 2026-10-03 at power-on): while paused, the default mode is `change`. While idle, it is `clean`. After any unload during a pause, the nozzle returns to standby and the 30-minute hotend-off timer restarts.
 
 ### 5.14 Idle timeout
 
@@ -172,6 +168,21 @@ Full details and commands: [printer system setup](printer-system-setup.md).
 - Debian buster moved to `archive.debian.org`. The sources were changed and 156 packages updated. Kernel, device tree, bootloader and `armbian-bsp-cli-mkspi` were kept. Never run `apt autoremove` on this printer.
 - The vnStat `eth0` database was reset.
 - 4 boot failures are harmless: `networking` (CAN), `makerbase-net-mods`, `haveged`, `smartd`.
+
+### 5.16 Toolhead replaced (2026-10-04)
+
+The user replaced the whole toolhead (hotend, extruder, probe, fans, `MKS_THR` board with accelerometer) with a spare of the same model. The board connected without config changes.
+
+| Step | Result |
+| --- | --- |
+| Fans and probe check | OK |
+| Hotend PID at 220 °C | Kp 32.379, Ki 4.693, Kd 55.852 |
+| Extruder `rotation_distance` | Stays 23. A first test gave 11.5 because `G1 E50` ran once, not twice, so the measurement was halved. A check at 11.5 extruded about 100 mm for 50 mm commanded. Reverted to 23 and confirmed 50 mm = 50 mm. |
+| Z offset | 1.310 → 0.450 |
+| `JRLanger` mesh | New 5 × 5 mesh, range about 0.28 mm. It rises about 0.15 mm from left to right. |
+| Input shaper | Values unchanged (X mzv 49.2 Hz, Y 2hump_ei 53.0 Hz). |
+
+Lesson: after `FIRMWARE_RESTART` Klipper is in absolute extrusion mode (`M82`). Send `M83` before manual `G1 E` moves, or a repeated `G1 E50` does nothing. Check the console history (`/server/gcode_store`) before acting on a measurement.
 
 ---
 
@@ -193,7 +204,7 @@ Full details and commands: [printer system setup](printer-system-setup.md).
 
 | File | Content |
 | --- | --- |
-| `printer.cfg` | Hardware, limits, runout sensor, beeper, `[respond]`, `SAVE_CONFIG` block (z_offset 1.310, meshes `default`, `JRLanger`, `adaptive`) |
+| `printer.cfg` | Hardware, limits, runout sensor, beeper, `[respond]`, `SAVE_CONFIG` block (z_offset 0.450, extruder PID, meshes `default`, `JRLanger`, `adaptive`) |
 | `macros.cfg` | All macros |
 | `homing_override.cfg` | Sensorless X/Y homing, probe Z. Restores accel from the config. |
 | `mainsail.cfg` | Snapshot of the read-only link target |
