@@ -1,0 +1,203 @@
+# KLP1 Session Handoff
+
+Snapshot: 2026-10-03, evening. This document lists every change made to the printer from 2026-09-16 to 2026-10-03, the problems found, their causes, and the fixes. Use it to continue the work in a new session.
+
+Related documents:
+
+- [README](../README.md): macro table, slicer G-code, restore steps, change log.
+- [Printer system setup](printer-system-setup.md): operating system changes (clock, package sources, update) with the commands to redo them.
+- [Calibration manual](calibration-manual.md): printer and filament calibration order.
+
+---
+
+## 1. Current state
+
+**The printer is out of service.** On 2026-10-03 at 19:49 a filament change (`M600`) jammed the filament in the hotend. Pushing and pulling by hand at 220 °C did not move it. The user is opening the toolhead to clean it. The print `Letras_3D_PLA_2h51m` (paused at 5 %) is lost.
+
+**Waiting to load.** `macros.cfg` on the printer has a change that Klipper has not loaded yet (see [5.13](#513-unload-button-ran-a-cold-pull-during-a-pause)). The file was copied without a restart because the heaters were in use. Klipper loads it at the next `FIRMWARE_RESTART` or power-on.
+
+**Repository.** The local folder, the GitHub repository and the files on the printer match (commit `c9e11fa` plus this document). The repository is public. It contains no secrets and no LAN addresses.
+
+---
+
+## 2. Open items (do these next)
+
+| # | Item | Why |
+| --- | --- | --- |
+| 1 | **Set Orca's Pause G-code to `PAUSE RETURN=next`.** | The live Orca profile has no Pause G-code of its own, so it uses the vendor default `M601`. `M601` is not defined in `macros.cfg`. Klipper prints `Unknown command:"M601"` and keeps printing, so a layer pause is skipped. The file printed tonight still had `PAUSE` because it was sliced before the profile changed. Alternative: enable the `M601` macro in `macros.cfg` and make it call `PAUSE RETURN=next`. |
+| 2 | After the toolhead is back together: run `FIRMWARE_RESTART`. | Loads the new `UNLOAD_FILAMENT` ([5.13](#513-unload-button-ran-a-cold-pull-during-a-pause)). |
+| 3 | Calibrate the Z offset again (calibration manual A3 and A4). | Disassembly changes the nozzle height. The saved value 1.310 is no longer valid. |
+| 4 | Run a hotend PID tune at 210 °C if the nozzle, heater or thermistor was replaced. | |
+| 5 | Find the cause of the heat-creep jams ([5.12](#512-filament-jams-during-filament-change-heat-creep)). | The macros now run correctly, but the 4th jam happened anyway. Check the hotend fan, the heatsink fins, the heatbreak seating, and the filament brand. |
+| 6 | Watch the first filament change after the repair. | Confirm a clean, fast unload and that `RESUME RETURN=next` leaves no mark ([5.9](#59-resume-left-a-mark-on-the-part)). Tune `resume_retract` (2.0 mm) if needed. |
+| 7 | Test `TEST_MOTION` above 100 mm/s. | Only 50 and 100 mm/s were run. Arcs above about 300 mm/s can overload the host (`Timer too close`). |
+| 8 | Decide on restart and shutdown macros. | The user asked. The answer: Fluidd already has host reboot and shutdown in its power menu. Macro buttons need the `gcode_shell_command` extension plus a sudoers rule. Not done. |
+
+Orca's color-change retraction (`retract_length_toolchange`) is now 0.6 mm in the live profile. Tonight's file used 2 mm. Re-slice files that contain color changes so that they use the new value.
+
+---
+
+## 3. Access and environment
+
+| Item | Value |
+| --- | --- |
+| Printer | Kingroon KLP1, MKS Pi host, MKS_THR toolhead board on serial |
+| Software | Klipper v0.11.0-122 (2023-02), Moonraker, **Fluidd** (not Mainsail), KlipperScreen, crowsnest, Obico |
+| Host OS | Armbian 22.05 on Debian 10 buster, kernel 5.16.20-rockchip64 |
+| SSH | user `mks`, key `~/.ssh/id_ed25519` on the Mac (no password). `sudo` needs the `mks` password, which only the user types. |
+| Config path | `/home/mks/printer_data/config` |
+| Moonraker API | port 7125 on the printer, open to the LAN without login |
+| Repository | `JRLanger/klp1-config` on GitHub, **public** |
+| Local folder | `/Users/jrlanger/Documents/Claude/Projects/KLP1` |
+| Slicer | OrcaSlicer, printer preset `Kingroon KLP1 0.4 nozzle - JRL`. Presets live in `~/Library/Application Support/OrcaSlicer/user/default/`. A copy with the IP removed is in `orca/`. |
+| Time zone | America/Sao_Paulo (UTC−3) |
+
+---
+
+## 4. Working method
+
+This method worked for every change. Use it again.
+
+1. Edit the file in the local repository.
+2. Render-test changed macros with Klipper's own Jinja environment on the printer: `~/klippy-env/bin/python`, `jinja2.Environment('{%', '%}', '{', '}')`, a mock `printer` object, and sample `params`. This catches template bugs before they move the machine.
+3. Copy the old file on the printer to `<file>.bak.<timestamp>`, then copy the new file with `scp`.
+4. Run `FIRMWARE_RESTART` through Moonraker. Then check `/printer/info`: `state` must be `ready`. **Never restart during a print.** A restart cancels it and turns the heaters off.
+5. Check the loaded values through `/printer/objects/query?configfile=settings`. Note: this view drops `;` comments, so search for code, not comments.
+6. Commit with a body that states the cause and the fix, then push.
+
+The permission system asks for approval before Claude writes to the printer over SSH. Reads do not need approval.
+
+---
+
+## 5. Problems and fixes, by topic
+
+### 5.1 Repository and secrets (2026-09-16)
+
+- Scanned all files. The only secret was the Obico `auth_token` in `moonraker-obico.cfg`. That file is in `.gitignore`.
+- `.gitignore` also excludes `moonraker.secrets`, `*.bak`, the `printer-*.cfg` backups from `SAVE_CONFIG`, and `.DS_Store`.
+- The first `.gitignore` had an inline `#` comment on a pattern line. Git reads that as part of the pattern, so the token file was staged. It was removed before the first commit and never reached the history.
+- The repository was created private, then made public at the user's request. LAN addresses were removed from the OrcaSlicer backup.
+
+### 5.2 Macro rewrite and the Mainsail override (2026-09-16)
+
+- The user supplied a rewritten `macros.cfg`: two-stage `PAUSE`/`RESUME`, safe `END_PRINT`/`CANCEL_PRINT`, and `G29`/`G30`/`G40` renamed to `CALIBRATE_Z_OFFSET`/`CALIBRATE_MESH`/`CALIBRATE_SHAPER`.
+- `mainsail.cfg` on the printer is a **link** to `~/mainsail-config/client.cfg`, which is read-only. It also defines `PAUSE`, `RESUME` and `CANCEL_PRINT`.
+- No conflict: `printer.cfg` includes `macros.cfg` after `mainsail.cfg`, and the later definition replaces the earlier one. The first plan, to comment out the macros in `mainsail.cfg`, was not needed and was reverted.
+- The first backup of `mainsail.cfg` in the repository was a trimmed copy. It now matches the real file.
+
+### 5.3 Beeper (2026-09-16)
+
+- `[output_pin beeper]` (PC5) got `pwm: True`. `M300 S<Hz> P<ms>` added.
+- Volume is about the same at 1.5–4.5 kHz. The pause alert is 3 × 1000 ms at 1 kHz.
+
+### 5.4 Filament change `M600` (2026-09-16)
+
+- A guided pop-up (`action:prompt`, needs `[respond]`) did not show in Fluidd v1.24.1. The console received the messages, but Fluidd drew nothing. KlipperScreen never shows these pop-ups.
+- Final design: `M600` = `PAUSE` + unload + console message. The user loads with `LOAD_FILAMENT`, then presses `RESUME` twice. `[respond]` stays in `printer.cfg` for Mainsail.
+
+### 5.5 Configuration review (2026-09-16)
+
+| Problem | Fix |
+| --- | --- |
+| The runout `runout_gcode` parked and reheated, which conflicted with the new `PAUSE` | Rewritten. See [5.12](#512-filament-jams-during-filament-change-heat-creep) for the current version. |
+| `CALIBRATE_Z_OFFSET` probed with the bed mesh active | `BED_MESH_CLEAR` after `G28`. |
+| `max_accel: 20000`, but homing reset it to 5000 | `max_accel: 6000`. `homing_override.cfg` restores the configured value. |
+| Every `G28` loaded mesh `default` | Removed. `START_PRINT` handles the mesh. |
+| `min_extrude_temp: 60`, bed `max_temp: 200` | 80 and 120. |
+
+Left as is: `fluidd.cfg` (not included anywhere), Moonraker open to the LAN, X/Y `run_current` 1.0 A.
+
+### 5.6 Materials (2026-09-16)
+
+- `_MAT` holds the temperatures: PLA 220/90, PETG 240/110, ABS 250/120 (melt/cold-pull).
+- `START_PRINT` stores `MATERIAL` in `_MAT.current`. A bare `M600` from the slicer uses it. Orca passes `MATERIAL=[filament_type]`.
+
+### 5.7 OrcaSlicer (2026-09-16 to 2026-10-02)
+
+- The vendor preset `Kingroon KLP1 0.4 nozzle` has wrong start G-code and a 230 × 230 bed. Use the `- JRL` preset only.
+- Start: `START_PRINT BED_TEMP=[bed_temperature_initial_layer_single] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] MATERIAL=[filament_type]`. End: `END_PRINT`. Change filament: `M600`. Pause: **must be `PAUSE RETURN=next`** (see open item 1).
+- Pressure advance is off in Orca. The firmware has `pressure_advance: 0.02` as a fallback. The calibration manual explains how per-filament values override it.
+- The preset was renamed from `- Copy` to `- JRL` by editing the JSON files while Orca was closed. Orca does not allow a user preset to take a vendor preset's name.
+- Measured over 16 prints: Orca's time estimate is within 3 % (median). Long waits come from pauses and the start sequence.
+
+### 5.8 Resume oozed on the part (2026-09-16)
+
+- `PAUSE` stores the print position (`rx`, `ry`, `rz`).
+- The exact return: purge and wipe at the corner, retract, travel above the part at a safe height, lower straight down, then prime.
+
+### 5.9 Resume left a mark on the part (2026-10-02)
+
+- Cause 1: the resume primed at the old pause point.
+- Cause 2: Klipper's built-in `RESUME` runs `RESTORE_GCODE_STATE NAME=PAUSE_STATE MOVE=1`, which always drives back to the pause point.
+- Fix: `PAUSE RETURN=next`. The resume purges at the corner, leaves the filament retracted by `resume_retract` (2.0 mm), and saves `PAUSE_STATE` again at the current position. The G-code file then travels to its next start, lowers and primes. Orca writes this travel after `M600` and after its pause G-code.
+- A plain `PAUSE` (Fluidd button, runout) keeps the exact return because it can happen in the middle of a line.
+
+### 5.10 Motion test `TEST_MOTION` (2026-10-02)
+
+- Visits the center and corners, then runs circles, a square, an X pattern, and the bed down and up. Speed, acceleration, loops and margin are parameters.
+- Bug 1: `I{-r}` rendered as `I85.0`. In Klipper's Jinja, `{-` is the whitespace-trim marker, not a minus sign. Write `I-{r}`.
+- Bug 2: Fluidd's macro form sends empty values (`ACCEL=`). Treat an empty string as "use the default".
+
+### 5.11 Adaptive mesh (2026-10-02)
+
+- Klipper v0.11 has no `ADAPTIVE=1`. `_ADAPTIVE_MESH` reads the `EXCLUDE_OBJECT` outlines and probes that area plus 10 mm, at full-mesh point spacing (3 × 3 to 5 × 5). Files without object data get a full mesh.
+- The mesh goes to profile `adaptive`. After each print Fluidd offers `SAVE_CONFIG`. Ignore it. A save on 2026-10-03 stored the `adaptive` profile in `printer.cfg`, which is harmless.
+- `START_PRINT ADAPTIVE=0` loads the saved `JRLanger` mesh instead.
+
+### 5.12 Filament jams during filament change (heat creep)
+
+The same jam happened 4 times. The tip forms a bulge in the heatbreak and stops moving in both directions. The user's current PLA is the most affected.
+
+| Round | Date | Cause found | Fix |
+| --- | --- | --- | --- |
+| 0 | 2026-09-18 | `M600` used the cold pull: cool to 90 °C, then reheat | `UNLOAD_FILAMENT MODE=change` (fast and hot). `clean` stays for maintenance. Part fan at 100 % during cold-pull cooling. |
+| 1 | 2026-10-02 | Orca retracted 2 mm, then `PAUSE` retracted 3 mm more and cooled with the fan at 100 %. The tip froze in the heatbreak. | `M600` calls `PAUSE RETURN=next RETRACT=0 COOL=0`. Pause retract 3 → 1 mm. Fan off during the unload. Standby only after the filament is out. Runout pauses without cooling and unloads hot. |
+| 2 | 2026-10-02 | The unload waited about 15 s for 215 → 220 °C to settle, with the tip in the heatbreak | Start at once when within 20 °C of the target. Pull 100 mm in total (`LENGTH=`). |
+| 3 | 2026-10-03 | The sequence ran correctly (210–224 °C, 8 s, no errors) but the filament did not move. It was already stuck. | Not solved. See open item 5. |
+
+### 5.13 Unload button ran a cold pull during a pause (2026-10-03)
+
+- The `UNLOAD_FILAMENT` button sends no `MODE`, so it ran the cold pull mid-print. It left the nozzle at 90 °C and cancelled the hotend-off timer.
+- Fix (copied, **not loaded yet**): while paused, the default mode is `change`. While idle, it is `clean`. After any unload during a pause, the nozzle returns to standby and the 30-minute hotend-off timer restarts.
+
+### 5.14 Idle timeout
+
+No change. `PAUSE` sets 12 h. The global value is 10 h. The hotend turns off after 30 min of pause on purpose. `RESUME` heats it again.
+
+### 5.15 Operating system (2026-10-02)
+
+Full details and commands: [printer system setup](printer-system-setup.md).
+
+- The clock was 9 days behind and set to Hong Kong time. Causes: no clock battery, the MKS boot script reports success even when `ntpdate` fails, and `systemd-timesyncd` cancelled `ntp` at boot. Fix: time zone `America/Sao_Paulo`, `systemd-timesyncd` masked, `ntp` enabled.
+- Debian buster moved to `archive.debian.org`. The sources were changed and 156 packages updated. Kernel, device tree, bootloader and `armbian-bsp-cli-mkspi` were kept. Never run `apt autoremove` on this printer.
+- The vnStat `eth0` database was reset.
+- 4 boot failures are harmless: `networking` (CAN), `makerbase-net-mods`, `haveged`, `smartd`.
+
+---
+
+## 6. Rules learned
+
+- `mainsail.cfg` is a read-only link. Override its macros in `macros.cfg`.
+- Never write `{-` in a macro for a negative value. Write `-{value}`.
+- Treat empty parameters as unset. Fluidd's macro form sends every field.
+- Klipper's built-in `RESUME` returns to the pause point unless `PAUSE_STATE` is saved again.
+- Unknown G-code commands do not stop a print. Klipper only prints `Unknown command`.
+- `max_extrude_only_distance` is 100 mm. Split long extruder moves into moves of 45 mm or less.
+- `SAVE_CONFIG` restarts Klipper. Never run it during a print.
+- Klipper v0.11 limits: no `ADAPTIVE=1`. The `BED_MESH_CALIBRATE` overrides (`MESH_MIN`, `MESH_MAX`, `PROBE_COUNT`) reset after each call.
+- A long retract (more than about 1–2 mm) with a pause or a cool-down jams this hotend.
+
+---
+
+## 7. Files
+
+| File | Content |
+| --- | --- |
+| `printer.cfg` | Hardware, limits, runout sensor, beeper, `[respond]`, `SAVE_CONFIG` block (z_offset 1.310, meshes `default`, `JRLanger`, `adaptive`) |
+| `macros.cfg` | All macros |
+| `homing_override.cfg` | Sensorless X/Y homing, probe Z. Restores accel from the config. |
+| `mainsail.cfg` | Snapshot of the read-only link target |
+| `MKS_THR.cfg` | Toolhead board, part fan, hotend fan |
+| `orca/` | OrcaSlicer presets, IP removed |
+| `documents/` | Calibration manual, printer system setup, this handoff |
+| Not in the repository | `moonraker-obico.cfg` (token), `printer-*.cfg` and `*.bak.*` backups on the printer |

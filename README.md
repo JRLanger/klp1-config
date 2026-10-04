@@ -110,6 +110,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 - [Calibration manual](documents/calibration-manual.md) — printer calibration order, per-spool filament calibration, and a command reference.
 - [Printer system setup](documents/printer-system-setup.md) — changes to the printer's operating system (clock and time zone, package sources, system update), why each was needed, and how to redo them after a reflash.
+- [Session handoff](documents/session-handoff.md) — current state, open items, and every problem, cause and fix from 2026-09-16 to 2026-10-03.
 
 ## Change log
 
