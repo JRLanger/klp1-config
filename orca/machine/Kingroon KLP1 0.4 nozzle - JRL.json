@@ -10,24 +10,24 @@
         "2000"
     ],
     "machine_max_acceleration_extruding": [
-        "6000",
-        "6000"
+        "8000",
+        "8000"
     ],
     "machine_max_acceleration_retracting": [
         "2000",
         "2000"
     ],
     "machine_max_acceleration_travel": [
-        "6000",
-        "6000"
+        "8000",
+        "8000"
     ],
     "machine_max_acceleration_x": [
-        "6000",
-        "6000"
+        "8000",
+        "8000"
     ],
     "machine_max_acceleration_y": [
-        "6000",
-        "6000"
+        "8000",
+        "8000"
     ],
     "machine_pause_gcode": "PAUSE RETURN=next",
     "machine_start_gcode": "START_PRINT BED_TEMP=[bed_temperature_initial_layer_single] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] MATERIAL=[filament_type]",
