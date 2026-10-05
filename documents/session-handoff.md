@@ -195,6 +195,33 @@ The user replaced the whole toolhead (hotend, extruder, probe, fans, `MKS_THR` b
 
 Lesson: after `FIRMWARE_RESTART` Klipper is in absolute extrusion mode (`M82`). Send `M83` before manual `G1 E` moves, or a repeated `G1 E50` does nothing. Check the console history (`/server/gcode_store`) before acting on a measurement.
 
+### 5.17 Probe and homing speeds (2026-10-05)
+
+The probe is an inductive proximity sensor (metal only, 2 mm range), mounted about 1 mm above the nozzle tip. It is wired to the `MKS_THR` toolhead board, and the Z motor is on the main board. Klipper allows up to 25 ms between a trigger on one board and the motor stop on the other, so the bed can travel speed × 0.025 s past the trigger. The nozzle is only 0.45 mm above the bed at the trigger point (the Z offset), so 10 mm/s is the safe maximum (0.25 mm worst case). Measured round-trip time to both boards is 1–4 ms, so real overtravel is much smaller.
+
+Evidence before the change:
+
+- 14 meshes in the logs (301 points × 3 samples): median spread 0.0013 mm, worst 0.010 mm, no retries. About 5 s per point.
+- The average of 2 samples differs from the median of 3 by at most 0.0044 mm (mean 0.0001 mm) on the same points.
+- `PROBE_ACCURACY` with 20 samples at the bed center, bed 60 °C and nozzle 150 °C: 5 mm/s gave a standard deviation of 0.0018 mm, and 10 mm/s gave 0.0010 mm. One Z step is 0.00125 mm. The 5 mm/s run drifted down 0.004 mm while the sensor warmed up.
+- Each probe touch costs about 0.4 s of fixed overhead at any speed, so fewer samples saves more time than a faster probe.
+- Homing took 17–61 s. The long cases start with the bed parked at 200 mm after a print, then a 5 mm/s approach.
+
+| Setting | Before | After |
+| --- | --- | --- |
+| `[probe] speed` | 5 | 10 |
+| `[probe] lift_speed` | not set (5) | 15 |
+| `[probe] samples` | 3 | 2 |
+| `[probe] samples_tolerance` | 0.05 | 0.02 |
+| `[bed_mesh] speed`, `horizontal_move_z` | 50, 5 | 150, 3 |
+| `[screws_tilt_adjust] speed`, `horizontal_move_z` | 2000 (capped at 500), 5 | 150, 3 |
+| `[stepper_z] homing_speed`, `homing_retract_dist` | 5, 5 (default) | 10, 2 |
+| `homing_override.cfg` final `G1 Z10` | F100 | F600 |
+
+Not changed: X/Y sensorless homing at 50 mm/s with `driver_SGTHRS: 110`. Klipper suggests 20 mm/s and 2 s pauses as a starting point, but speed and sensitivity are tuned as a pair. Change them only if homing fails. The first `G1 Z5 F100` in the homing override stays slow because Z is unknown at that point.
+
+If the sensor is ever re-mounted and the Z offset drops below about 0.3 mm, set the probe speed back to 5 mm/s.
+
 ---
 
 ## 6. Rules learned
