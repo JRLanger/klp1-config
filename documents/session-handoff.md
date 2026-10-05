@@ -222,6 +222,33 @@ Not changed: X/Y sensorless homing at 50 mm/s with `driver_SGTHRS: 110`. Klipper
 
 If the sensor is ever re-mounted and the Z offset drops below about 0.3 mm, set the probe speed back to 5 mm/s.
 
+### 5.18 Speed and acceleration optimization (2026-10-05)
+
+Goal: the fastest print without a visible quality loss. Visible features keep their settings. Hidden features run faster.
+
+Findings:
+
+- The `- JRL` process preset set no speeds of its own. All values came from Kingroon's generic `fdm_process_common`. It sets inner walls to 300 mm/s² while outer walls use 3000, which looks like a vendor typo (their KP3S profile uses 700).
+- Input shaper limits, from Klipper's own calculation: X mzv 49.2 Hz allows 7100 mm/s², Y 2hump_ei 53.0 Hz allows 3100 mm/s². Visible features stay at 3000.
+- The PLA max flow of 75 mm³/s did not come from the flow test. `SpeedTestStructure` ramps from 6 to 20 mm³/s only. The furthest run stopped at 18 mm³/s (91 mm/s). An earlier failure at about 75 mm/s equals about 15 mm³/s, so the speed was probably typed into the flow field.
+- A planner simulation of the last print (213 min of motion, Orca estimate 220 min) put 30 % of the time in inner walls.
+
+| Setting (Orca) | Before | After |
+| --- | --- | --- |
+| Inner wall / sparse infill / internal solid infill acceleration | 300 / 3000 / 3000 | 6000 |
+| Inner wall / sparse infill / internal solid infill speed | 100 | 200 (capped by the flow limit, about 185–200) |
+| Travel | 150 mm/s at 3000 | 300 mm/s at 6000 |
+| Internal solid infill pattern | monotonic | rectilinear |
+| Max flow: EN-PLA / Generic PLA copy / Hyper-PETG | 75 / 12 / 30 | 15 / 15 / 12 |
+| EN-PLA min layer time | 0 s | 4 s |
+| Machine limits X, Y, extruding, travel / retracting, E | 10000, 10000, 5000, 9000 / 5000, 5000 | 6000 / 2000 |
+
+Unchanged on purpose: outer walls (80 mm/s, 3000), top surfaces (60 mm/s, 3000), first layer, bridges, overhangs, gap fill, ironing. Applied to both the `- JRL` and `- Toy Cube` process presets. The printer config did not change.
+
+Checks: `TEST_MOTION SPEED=300 ACCEL=6000 CIRCLES=0 LOOPS=2` finished with no errors. Circles were skipped because fast arcs can overload the host. Simulated time for the last print: 213 → 149 min of motion (−30 %). A flow limit of 18 instead of 15 would save only 1 more minute.
+
+Orca stores the rectilinear pattern as `rectilinear` in version 2.4. Its system profiles still use the older `zig-zag`.
+
 ---
 
 ## 6. Rules learned
@@ -234,6 +261,7 @@ If the sensor is ever re-mounted and the Z offset drops below about 0.3 mm, set 
 - `max_extrude_only_distance` is 100 mm. Split long extruder moves into moves of 45 mm or less.
 - `SAVE_CONFIG` restarts Klipper. Never run it during a print.
 - Klipper v0.11 limits: no `ADAPTIVE=1`. The `BED_MESH_CALIBRATE` overrides (`MESH_MIN`, `MESH_MAX`, `PROBE_COUNT`) reset after each call.
+- Klipper accepts any `SET_VELOCITY_LIMIT ACCEL=` from the slicer, even above `max_accel`. Orca's machine limits are the only cap, so keep them equal to the printer's real limits.
 - Never pull a hot, soft tip through the extruder gears. Let it harden in the cold zone first (cold pull). A hot pull squashes the tip into a blob that locks the gear chamber.
 
 ---

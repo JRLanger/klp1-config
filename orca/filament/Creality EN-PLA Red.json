@@ -10,7 +10,7 @@
         "Direct Drive Standard"
     ],
     "filament_max_volumetric_speed": [
-        "75"
+        "15"
     ],
     "filament_settings_id": [
         "Creality EN-PLA Red"
@@ -25,7 +25,7 @@
         "215"
     ],
     "slow_down_layer_time": [
-        "0"
+        "4"
     ],
     "version": "2.3.0.3"
 }
