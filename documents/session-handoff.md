@@ -249,6 +249,8 @@ Unchanged on purpose: outer walls (80 mm/s, 3000), top surfaces (60 mm/s, 3000),
 
 Later the same day, after the new input shaper: the user set normal printing, outer wall and top surface acceleration to 5000 in `- JRL`. Speeds of visible features are unchanged.
 
+Then hidden features went to 8000 mm/s² after `TEST_MOTION SPEED=300 ACCEL=8000` ran clean (with circles). In Klipper v0.11 the effective `max_accel_to_decel` is the smaller of the configured value and the current acceleration. With 6000 configured, an 8000 request would still smooth short zig-zags at 6000, so `printer.cfg` now has `max_accel_to_decel: 8000`. `max_accel` stays 6000, so macros, homing and mesh probing do not change. Orca: inner wall, sparse infill, internal solid infill and travel acceleration 8000; machine limits X, Y, extruding and travel 8000 (retracting and E stay 2000). Simulated gain on the Letras print: about 4 min.
+
 Checks: `TEST_MOTION SPEED=300 ACCEL=6000 CIRCLES=0 LOOPS=2` finished with no errors. Circles were skipped because fast arcs can overload the host. Simulated time for the last print: 213 → 149 min of motion (−30 %). A flow limit of 18 instead of 15 would save only 1 more minute.
 
 Orca stores the rectilinear pattern as `rectilinear` in version 2.4. Its system profiles still use the older `zig-zag`.
