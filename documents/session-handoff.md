@@ -25,6 +25,7 @@ Related documents:
 | 1 | Run Orca's max volumetric speed test (manual B2) for `Creality EN-PLA Red`. | Its preset allows 75 mm³/s, far above what this hotend melts. Fast moves would under-extrude. It also has `slow_down_layer_time` 0, which turns off the slow-down for small layers. |
 | 2 | Watch the next filament changes with the cold pull ([5.12](#512-filament-jams-during-filament-change-solved-2026-10-04)). | The fix replaces the hot unload. Check that the tip comes out hard, thin and without a blob. If the cooldown is too slow, a faster hot variant (tip forming) is possible, but it needs the toolhead dimensions (nozzle tip to top of heater block, to top of heatsink, to the gears). |
 | 3 | Calibrate flow and pressure advance per filament (calibration manual B3, B4) if not done yet. | New nozzle and extruder. |
+| 3b | Balance the belts ([5.19](#519-belt-balance-and-fresh-shaper-data-2026-10-05)), then `CALIBRATE_SHAPER` and save. | Belt A measures about 55 % of belt B's tension. Balanced belts can raise the visible-feature acceleration from 3000 toward about 4500. |
 | 4 | Check that `RESUME RETURN=next` leaves no mark after a filament change ([5.9](#59-resume-left-a-mark-on-the-part)). | Tune `resume_retract` (2.0 mm) if needed. |
 | 5 | Test `TEST_MOTION` above 100 mm/s. | Only 50 and 100 mm/s were run. Arcs above about 300 mm/s can overload the host (`Timer too close`). |
 | 6 | Decide on restart and shutdown macros. | The user asked. The answer: Fluidd already has host reboot and shutdown in its power menu. Macro buttons need the `gcode_shell_command` extension plus a sudoers rule. Not done. |
@@ -248,6 +249,26 @@ Unchanged on purpose: outer walls (80 mm/s, 3000), top surfaces (60 mm/s, 3000),
 Checks: `TEST_MOTION SPEED=300 ACCEL=6000 CIRCLES=0 LOOPS=2` finished with no errors. Circles were skipped because fast arcs can overload the host. Simulated time for the last print: 213 → 149 min of motion (−30 %). A flow limit of 18 instead of 15 would save only 1 more minute.
 
 Orca stores the rectilinear pattern as `rectilinear` in version 2.4. Its system profiles still use the older `zig-zag`.
+
+### 5.19 Belt balance and fresh shaper data (2026-10-05)
+
+The KLP1 is a CoreXY: both belts move both axes. A diagonal move turns only one motor, so it loads only one belt. `TEST_RESONANCES AXIS=1,1` measures belt A (the `stepper_x` motor) and `AXIS=1,-1` measures belt B (`stepper_y`).
+
+| Diagonal | Main peak | Other peaks |
+| --- | --- | --- |
+| Belt A (1,1) | 38.9 Hz, broad and low | 56.9, 64.4 Hz |
+| Belt B (1,−1) | 52.4 Hz, one strong peak (3× belt A) | 67.3, 40.4 Hz |
+
+The curves correlate 0.69. If the main peaks are the same mode, belt A has about 55 % of belt B's tension (tension ∝ frequency²). The belt ends clamp at the toolhead, so the toolhead swap on 2026-10-04 re-tensioned both belts by hand. Uneven belts split each axis's resonance, which explains why the old calibration chose 2hump_ei for Y.
+
+Fresh `CALIBRATE_SHAPER` with the current belts (not saved, by agreement with the user):
+
+| Axis | Saved | New recommendation | Max accel saved → new |
+| --- | --- | --- | --- |
+| X | mzv 49.2 Hz | mzv 54.2 Hz (0.0 % vibration) | 7100 → 8700 |
+| Y | 2hump_ei 53.0 Hz | mzv 40.2 Hz (0.8 % vibration) | 3100 → 4800 |
+
+On today's data the saved shapers still leave 0.0 % residual vibration on both axes, so no ringing now. They only cap acceleration lower. Next: tighten belt A until the diagonal peaks match within about 2 Hz, then measure again, save the shaper, and raise Orca's outer wall and top surface acceleration to the new limit.
 
 ---
 
