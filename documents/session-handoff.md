@@ -26,7 +26,7 @@ Related documents:
 | 2 | Watch the next filament changes with the cold pull ([5.12](#512-filament-jams-during-filament-change-solved-2026-10-04)). | The fix replaces the hot unload. Check that the tip comes out hard, thin and without a blob. If the cooldown is too slow, a faster hot variant (tip forming) is possible, but it needs the toolhead dimensions (nozzle tip to top of heater block, to top of heatsink, to the gears). |
 | 3 | Calibrate flow and pressure advance per filament (calibration manual B3, B4) if not done yet. | New nozzle and extruder. |
 | 3b | After pressure advance, test outer walls at 120 mm/s ([5.19](#519-belt-balance-and-fresh-shaper-data-2026-10-05)). | Visible accelerations are already at 5000. Outer wall speed is the next lever (about 6 min on the Letras print). |
-| 3c | Printer moved on 2026-10-05: check the bed with `BED_TRAM` and a mesh (calibration manual A1, A2). | The manual calls for this after a move. |
+| 3c | Done 2026-10-05: after the move, `BED_TRAM` showed corners within 0.015 mm, and the new `JRLanger` mesh (range 0.134 mm) is saved. | |
 | 4 | Check that `RESUME RETURN=next` leaves no mark after a filament change ([5.9](#59-resume-left-a-mark-on-the-part)). | Tune `resume_retract` (2.0 mm) if needed. |
 | 5 | Test `TEST_MOTION` above 100 mm/s. | Only 50 and 100 mm/s were run. Arcs above about 300 mm/s can overload the host (`Timer too close`). |
 | 6 | Decide on restart and shutdown macros. | The user asked. The answer: Fluidd already has host reboot and shutdown in its power menu. Macro buttons need the `gcode_shell_command` extension plus a sudoers rule. Not done. |
@@ -305,7 +305,7 @@ Visible features may now use up to about 5000 mm/s². The planner simulation sho
 
 | File | Content |
 | --- | --- |
-| `printer.cfg` | Hardware, limits, runout sensor, beeper, `[respond]`, `SAVE_CONFIG` block (z_offset 0.450, extruder PID, meshes `default`, `JRLanger`, `adaptive`) |
+| `printer.cfg` | Hardware, limits, runout sensor, beeper, `[respond]`, `SAVE_CONFIG` block (z_offset 0.450, extruder PID, input shaper, meshes `default`, `JRLanger`, `adaptive`) |
 | `macros.cfg` | All macros |
 | `homing_override.cfg` | Sensorless X/Y homing, probe Z. Restores accel from the config. |
 | `mainsail.cfg` | Snapshot of the read-only link target |
