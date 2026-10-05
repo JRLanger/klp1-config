@@ -25,7 +25,7 @@ Related documents:
 | 1 | Run Orca's max volumetric speed test (manual B2) for `Creality EN-PLA Red`. | Its preset allows 75 mm³/s, far above what this hotend melts. Fast moves would under-extrude. It also has `slow_down_layer_time` 0, which turns off the slow-down for small layers. |
 | 2 | Watch the next filament changes with the cold pull ([5.12](#512-filament-jams-during-filament-change-solved-2026-10-04)). | The fix replaces the hot unload. Check that the tip comes out hard, thin and without a blob. If the cooldown is too slow, a faster hot variant (tip forming) is possible, but it needs the toolhead dimensions (nozzle tip to top of heater block, to top of heatsink, to the gears). |
 | 3 | Calibrate flow and pressure advance per filament (calibration manual B3, B4) if not done yet. | New nozzle and extruder. |
-| 3b | In Orca, set default, outer wall and top surface acceleration to 5000 ([5.19](#519-belt-balance-and-fresh-shaper-data-2026-10-05)). Then, after pressure advance, test outer walls at 120 mm/s. | The new shaper allows about 5300 mm/s² on Y. |
+| 3b | After pressure advance, test outer walls at 120 mm/s ([5.19](#519-belt-balance-and-fresh-shaper-data-2026-10-05)). | Visible accelerations are already at 5000. Outer wall speed is the next lever (about 6 min on the Letras print). |
 | 3c | Printer moved on 2026-10-05: check the bed with `BED_TRAM` and a mesh (calibration manual A1, A2). | The manual calls for this after a move. |
 | 4 | Check that `RESUME RETURN=next` leaves no mark after a filament change ([5.9](#59-resume-left-a-mark-on-the-part)). | Tune `resume_retract` (2.0 mm) if needed. |
 | 5 | Test `TEST_MOTION` above 100 mm/s. | Only 50 and 100 mm/s were run. Arcs above about 300 mm/s can overload the host (`Timer too close`). |
@@ -245,7 +245,9 @@ Findings:
 | EN-PLA min layer time | 0 s | 4 s |
 | Machine limits X, Y, extruding, travel / retracting, E | 10000, 10000, 5000, 9000 / 5000, 5000 | 6000 / 2000 |
 
-Unchanged on purpose: outer walls (80 mm/s, 3000), top surfaces (60 mm/s, 3000), first layer, bridges, overhangs, gap fill, ironing. Applied to both the `- JRL` and `- Toy Cube` process presets. The printer config did not change.
+Unchanged on purpose: outer walls (80 mm/s, 3000), top surfaces (60 mm/s, 3000), first layer, bridges, overhangs, gap fill, ironing. Applied to the `- JRL` process preset (the `- Toy Cube` preset was deleted by the user on 2026-10-05). The printer config did not change.
+
+Later the same day, after the new input shaper: the user set normal printing, outer wall and top surface acceleration to 5000 in `- JRL`. Speeds of visible features are unchanged.
 
 Checks: `TEST_MOTION SPEED=300 ACCEL=6000 CIRCLES=0 LOOPS=2` finished with no errors. Circles were skipped because fast arcs can overload the host. Simulated time for the last print: 213 → 149 min of motion (−30 %). A flow limit of 18 instead of 15 would save only 1 more minute.
 

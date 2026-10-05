@@ -1,5 +1,6 @@
 {
     "brim_type": "no_brim",
+    "default_acceleration": "5000",
     "enable_prime_tower": "0",
     "enable_support": "0",
     "from": "User",
@@ -11,6 +12,7 @@
     "internal_solid_infill_speed": "200",
     "ironing_type": "top",
     "name": "0.20mm Standard @Kingroon KLP1 - JRL",
+    "outer_wall_acceleration": "5000",
     "print_extruder_id": [
         "1"
     ],
@@ -23,6 +25,7 @@
     "slice_closing_radius": "0.01",
     "sparse_infill_acceleration": "6000",
     "sparse_infill_speed": "200",
+    "top_surface_acceleration": "5000",
     "travel_acceleration": "6000",
     "travel_speed": "300",
     "version": "2.4.0.2"
