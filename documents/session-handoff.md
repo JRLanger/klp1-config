@@ -25,7 +25,8 @@ Related documents:
 | 1 | Run Orca's max volumetric speed test (manual B2) for `Creality EN-PLA Red`. | Its preset allows 75 mm³/s, far above what this hotend melts. Fast moves would under-extrude. It also has `slow_down_layer_time` 0, which turns off the slow-down for small layers. |
 | 2 | Watch the next filament changes with the cold pull ([5.12](#512-filament-jams-during-filament-change-solved-2026-10-04)). | The fix replaces the hot unload. Check that the tip comes out hard, thin and without a blob. If the cooldown is too slow, a faster hot variant (tip forming) is possible, but it needs the toolhead dimensions (nozzle tip to top of heater block, to top of heatsink, to the gears). |
 | 3 | Calibrate flow and pressure advance per filament (calibration manual B3, B4) if not done yet. | New nozzle and extruder. |
-| 3b | Balance the belts ([5.19](#519-belt-balance-and-fresh-shaper-data-2026-10-05)), then `CALIBRATE_SHAPER` and save. | Belt A measures about 55 % of belt B's tension. Balanced belts can raise the visible-feature acceleration from 3000 toward about 4500. |
+| 3b | In Orca, set default, outer wall and top surface acceleration to 5000 ([5.19](#519-belt-balance-and-fresh-shaper-data-2026-10-05)). Then, after pressure advance, test outer walls at 120 mm/s. | The new shaper allows about 5300 mm/s² on Y. |
+| 3c | Printer moved on 2026-10-05: check the bed with `BED_TRAM` and a mesh (calibration manual A1, A2). | The manual calls for this after a move. |
 | 4 | Check that `RESUME RETURN=next` leaves no mark after a filament change ([5.9](#59-resume-left-a-mark-on-the-part)). | Tune `resume_retract` (2.0 mm) if needed. |
 | 5 | Test `TEST_MOTION` above 100 mm/s. | Only 50 and 100 mm/s were run. Arcs above about 300 mm/s can overload the host (`Timer too close`). |
 | 6 | Decide on restart and shutdown macros. | The user asked. The answer: Fluidd already has host reboot and shutdown in its power menu. Macro buttons need the `gcode_shell_command` extension plus a sudoers rule. Not done. |
@@ -259,7 +260,7 @@ The KLP1 is a CoreXY: both belts move both axes. A diagonal move turns only one 
 | Belt A (1,1) | 38.9 Hz, broad and low | 56.9, 64.4 Hz |
 | Belt B (1,−1) | 52.4 Hz, one strong peak (3× belt A) | 67.3, 40.4 Hz |
 
-The curves correlate 0.69. If the main peaks are the same mode, belt A has about 55 % of belt B's tension (tension ∝ frequency²). The belt ends clamp at the toolhead, so the toolhead swap on 2026-10-04 re-tensioned both belts by hand. Uneven belts split each axis's resonance, which explains why the old calibration chose 2hump_ei for Y.
+The curves correlate 0.69. If the main peaks are the same mode, belt A has about 55 % of belt B's tension (tension ∝ frequency²). Uneven belts split each axis's resonance, which explains why the old calibration chose 2hump_ei for Y. The belt tension screws are reachable from outside, without opening the toolhead.
 
 Fresh `CALIBRATE_SHAPER` with the current belts (not saved, by agreement with the user):
 
@@ -268,7 +269,16 @@ Fresh `CALIBRATE_SHAPER` with the current belts (not saved, by agreement with th
 | X | mzv 49.2 Hz | mzv 54.2 Hz (0.0 % vibration) | 7100 → 8700 |
 | Y | 2hump_ei 53.0 Hz | mzv 40.2 Hz (0.8 % vibration) | 3100 → 4800 |
 
-On today's data the saved shapers still leave 0.0 % residual vibration on both axes, so no ringing now. They only cap acceleration lower. Next: tighten belt A until the diagonal peaks match within about 2 Hz, then measure again, save the shaper, and raise Orca's outer wall and top surface acceleration to the new limit.
+On that data the saved shapers still left 0.0 % residual vibration on both axes, so there was no ringing. They only capped acceleration lower.
+
+After the fix (same day): the user re-tensioned the belts and moved the printer to a sturdier surface. Both diagonals now peak at 53.9 Hz, and the curves correlate 0.98. A fresh `CALIBRATE_SHAPER` was saved with `SAVE_CONFIG`:
+
+| Axis | Shaper | Max accel |
+| --- | --- | --- |
+| X | mzv 56.4 Hz (0.0 % vibration) | 9400 |
+| Y | mzv 42.6 Hz (0.3 % vibration) | 5300 |
+
+Visible features may now use up to about 5000 mm/s². The planner simulation shows that raising them from 3000 to 5000 saves only about 1 min on the Letras print, because outer walls at 80 mm/s reach full speed within about 1 mm. The bigger levers are outer wall speed (120 mm/s: −6 min, 150 mm/s: −8 min; test quality first, after pressure advance) and hidden features at 8000 mm/s² (−4 min; needs `TEST_MOTION` at 8000 first).
 
 ---
 
