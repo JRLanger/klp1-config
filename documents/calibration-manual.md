@@ -2,7 +2,16 @@
 
 Printer: Kingroon KLP1. Firmware: Klipper. Interface: Mainsail. Slicer: OrcaSlicer.
 
-This manual has two parts. Part A is the printer calibration. Part B is the filament calibration. Do Part A first. The filament calibration gives wrong values if the printer is not calibrated.
+This manual has four parts. Do them in this order. Each part uses the results of the parts before it.
+
+| Part | Content | When |
+| --- | --- | --- |
+| Part M | Mechanics and base setup (M1 to M3) | One time, and after a hardware change |
+| Part A | Printer calibration (A1 to A5) | One time, and after a hardware change or a move |
+| Part B | Filament calibration (B0 to B8) | For each filament |
+| Part C | Final checks (C1, C2), optional | One time, after Part B for your main filament |
+
+Software cannot correct loose hardware. The filament calibration gives wrong values if the printer is not calibrated.
 
 ---
 
@@ -12,6 +21,61 @@ This manual has two parts. Part A is the printer calibration. Part B is the fila
 - `SAVE_CONFIG` restarts Klipper. Do not run `SAVE_CONFIG` during a print.
 - Move the nozzle down in small steps near the bed. A large step pushes the nozzle into the build plate.
 - Turn off the heaters after each calibration. The printer keeps the heaters on until the idle timeout.
+
+---
+
+# Part M. Mechanics and base setup
+
+Do these steps before Part A. A loose belt or a wrong extruder value makes every later result wrong.
+
+## M1. Check the mechanics
+
+Do this step one time. Do this step again after you change a belt, the toolhead, or a motor, and after the printer falls or moves in a car.
+
+1. Turn off the motors. Run `M84`.
+2. Push the toolhead and the bed by hand in each direction. They must move without play and without a click.
+3. Tighten the frame screws that you can reach.
+4. Heat the nozzle to 230 C. Tighten the nozzle with a small turn. Do not use force. A hot nozzle seals against the heat break. A cold nozzle can leak.
+5. Check the belt tension. The KLP1 is a CoreXY printer. Each belt moves both axes, so the two belts must have the same tension.
+    1. Run `G28`.
+    2. Run `TEST_RESONANCES AXIS=1,1`. This test moves only the belt of `stepper_x` (belt A).
+    3. Run `TEST_RESONANCES AXIS=1,-1`. This test moves only the belt of `stepper_y` (belt B).
+    4. Each test writes a CSV file. The console shows the file path. Compare the main peak of the two files.
+    5. The two peaks must be within 2 Hz of each other. If the peaks are different, tighten the belt with the lower peak. The tension screws are on the outside of the printer.
+    6. Do the tests again after each change.
+
+Tension changes with the square of the frequency. A peak of 39 Hz against 52 Hz means that the first belt has only 55 % of the tension of the second belt.
+
+## M2. Tune the heaters (PID_CALIBRATE)
+
+Do this step after you change the heater, the thermistor, the hotend, or the toolhead.
+
+1. Let the hotend and the bed cool to room temperature.
+2. Run `PID_CALIBRATE HEATER=extruder TARGET=220`. Use your usual print temperature.
+3. Wait for the test to finish. The test takes about 5 minutes.
+4. Run `PID_CALIBRATE HEATER=heater_bed TARGET=60`.
+5. Wait for the test to finish. The bed test takes longer.
+6. Run `SAVE_CONFIG`. Klipper restarts.
+
+A stable temperature gives a stable extrusion. The temperature graph must show a flat line during a print. A wave of more than 1 C shows a bad PID tune.
+
+## M3. Calibrate the extruder (rotation_distance)
+
+Do this step after you change the extruder or the extruder gears. The flow rate (B3) builds on this value.
+
+1. Heat the nozzle to the print temperature of the loaded filament.
+2. Mark the filament 120 mm above the entry of the extruder.
+3. Run `M83`. After a restart Klipper uses absolute extrusion, and `G1 E` moves do not move as expected.
+4. Run `G1 E100 F60` one time only. The extruder pushes 100 mm at 1 mm/s. Wait for the move to stop. The move takes 100 s.
+5. Measure the distance from the extruder entry to the mark.
+6. Calculate the extruded length: 120 minus the measured distance.
+7. Calculate the new value: new `rotation_distance` = old `rotation_distance` × extruded length / 100.
+8. Write the new value in `printer.cfg`, section `[extruder]`. `SAVE_CONFIG` does not save this value.
+9. Restart Klipper. Do the test again. The extruded length must be between 99 mm and 101 mm.
+
+Example: the old value is 23. The measured distance is 22 mm. The extruded length is 98 mm. The new value is 23 × 98 / 100 = 22.54.
+
+Send the `G1` command one time only. A second command adds 100 mm more and the result is wrong.
 
 ---
 
@@ -187,10 +251,45 @@ Do not change the global Z offset for one material.
 
 ---
 
+# Part C. Final checks (optional)
+
+Do Part C after Part B for your main filament. These checks need a good flow rate and pressure advance.
+
+## C1. Outer wall speed (VFA test)
+
+VFA means vertical fine artifacts. At some speeds the motors make small vertical lines on the walls. This test finds the speeds to avoid.
+
+1. Open OrcaSlicer. Click Calibration. Click VFA. Some versions show VFA under More.
+2. Print the test tower. Each band of the tower prints at a different speed.
+3. Look at the walls under a side light. Find the bands with no vertical lines.
+4. Set the outer wall speed of each process profile to a speed from a clean band.
+
+Do the test again after you change a motor, a belt, or the input shaper.
+
+## C2. Skew correction
+
+Do this step only for parts that must have exact dimensions or must fit together. A skewed printer prints a square as a parallelogram.
+
+1. Run `SET_SKEW CLEAR=1`. The test print must not use an old correction.
+2. Print a skew calibration square. Search for "Klipper skew calibration" on Printables.
+3. Measure the diagonal from corner A to corner C, the diagonal from corner B to corner D, and the side from corner A to corner D. Use a caliper.
+4. Run `SET_SKEW XY=AC,BD,AD`. Replace `AC`, `BD` and `AD` with your measurements in mm.
+5. Run `SKEW_PROFILE SAVE=CaliSkew`.
+6. Run `SAVE_CONFIG`. Klipper restarts.
+7. Add `SKEW_PROFILE LOAD=CaliSkew` to `START_PRINT` after the homing.
+8. Print the square again. The two diagonals must be within 0.1 mm of each other.
+
+`printer.cfg` must have a `[skew_correction]` section for these commands. The section is not in `printer.cfg` yet. Add it before step 1.
+
+---
+
 # How much to calibrate again
 
 | Situation | Steps to do |
 | --- | --- |
+| New toolhead or new hotend | M1, M2, M3, A3, A4, A5, B2, B3, B4 |
+| New extruder or extruder gears | M3, B3, B4 |
+| Belt change or new belt tension | M1 (belt check), A5, C1 |
 | New material or new brand | B0 to B5 |
 | New color, same brand and material | B1, B3, B4 |
 | New spool, same brand, material, and color | B0, then one flow test (B3 pass 2) |
@@ -204,6 +303,9 @@ Do not change the global Z offset for one material.
 
 | Command | Action |
 | --- | --- |
+| `PID_CALIBRATE HEATER=extruder TARGET=220` | Tune the hotend heater. Use `HEATER=heater_bed TARGET=60` for the bed. |
+| `TEST_RESONANCES AXIS=1,1` | Measure belt A. Use `AXIS=1,-1` for belt B. |
+| `M83` | Use relative extrusion for manual `G1 E` moves. |
 | `BED_TRAM BED_TEMP=60` | Probe above each bed screw. Report the adjustment. |
 | `CALIBRATE_MESH BED_TEMP=60 SOAK=10` | Heat, soak, home, probe the mesh, save the profile. |
 | `CALIBRATE_Z_OFFSET BED_TEMP=60` | Start the interactive Z offset procedure. |
@@ -213,3 +315,5 @@ Do not change the global Z offset for one material.
 | `ABORT` | End the Z offset procedure without a change. |
 | `SAVE_CONFIG` | Write the result to `printer.cfg`. Klipper restarts. |
 | `Z_OFFSET_APPLY_PROBE` | Add the babystep value to the saved Z offset. |
+| `SET_SKEW XY=AC,BD,AD` | Set the skew correction from three measurements. Needs `[skew_correction]`. |
+| `SKEW_PROFILE SAVE=CaliSkew` | Save the skew correction. Use `LOAD=CaliSkew` to load it. |

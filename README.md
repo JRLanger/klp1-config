@@ -87,6 +87,8 @@ END_PRINT
 
 ## Calibration order
 
+Full order, from mechanics to filament and final checks: [`documents/calibration-manual.md`](documents/calibration-manual.md). Printer-only quick list:
+
 1. `BED_TRAM` — tram the bed (optionally `BED_TRAM BED_TEMP=60`).
 2. `CALIBRATE_MESH BED_TEMP=60`
 3. `SAVE_CONFIG`
@@ -114,6 +116,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-10-06** — Calibration manual: added Part M (M1 mechanics and CoreXY belt check, M2 heater PID, M3 extruder `rotation_distance`) before Part A, and optional Part C (C1 VFA test for outer wall speed, C2 skew correction) after Part B. New rows in the recalibration table for toolhead, extruder and belt changes.
 - **2026-10-05** — Added Orca process `0.12mm Quality @Kingroon KLP1 - JRL` for top quality (inherits Kingroon's 0.12 mm profile). Visible features slow and gentle: outer walls 60 mm/s and top surfaces 50 mm/s at 2000 mm/s², gap fill 60 mm/s. Inner walls 100 mm/s at 3000. Hidden infill stays fast (sparse 150 mm/s at 5000, solid 120 at 4000), travel 300 at 5000. `- JRL` (0.20 mm) remains the fast everyday profile.
 - **2026-10-05** — Bed checked after moving the printer. `BED_TRAM`: corners within 0.015 mm, no screw adjustment needed. New `JRLanger` mesh saved: range 0.134 mm (was 0.28). The 25-point mesh took 55 s with the faster probe settings (was about 2 min).
 - **2026-10-05** — Hidden features to 8000 mm/s²: `TEST_MOTION SPEED=300 ACCEL=8000` ran clean. `max_accel_to_decel` 6000 → 8000, so Klipper does not throttle short zig-zag moves when Orca requests 8000 (`max_accel` stays 6000 for macros and probing). Orca: inner wall, sparse infill, internal solid infill and travel acceleration 8000; machine limits X, Y, extruding and travel 8000.
