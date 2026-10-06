@@ -284,6 +284,22 @@ After the fix (same day): the user re-tensioned the belts and moved the printer 
 
 Visible features may now use up to about 5000 mm/s². The planner simulation shows that raising them from 3000 to 5000 saves only about 1 min on the Letras print, because outer walls at 80 mm/s reach full speed within about 1 mm. The bigger levers are outer wall speed (120 mm/s: −6 min, 150 mm/s: −8 min; test quality first, after pressure advance) and hidden features at 8000 mm/s² (−4 min; needs `TEST_MOTION` at 8000 first).
 
+### 5.20 Top-quality profile (2026-10-05)
+
+The user printed letters with the fast `- JRL` profile: a small quality loss, accepted for the speed. A second process preset, `0.12mm Quality @Kingroon KLP1 - JRL`, covers top-quality prints. It inherits Kingroon's `0.12mm Standard @Kingroon KLP1` (0.12 mm layers, 0.4 mm lines) and copies the `- JRL` non-speed choices (no brim, no support, ironing on top surfaces, scarf seams, rectilinear solid infill).
+
+| Feature | Speed (mm/s) | Acceleration (mm/s²) |
+| --- | --- | --- |
+| Outer wall | 60 | 2000 |
+| Top surface | 50 | 2000 |
+| Gap fill | 60 | default 3000 |
+| Inner wall | 100 | 3000 |
+| Sparse infill | 150 | 5000 |
+| Internal solid infill | 120 | 4000 |
+| Travel | 300 | 5000 |
+
+The file was created directly while Orca was closed, with a `.info` file whose `base_id` is the vendor 0.12 mm preset's `setting_id`. Expect about 1.7× the time of the 0.20 mm profile from the layer height alone.
+
 ---
 
 ## 6. Rules learned

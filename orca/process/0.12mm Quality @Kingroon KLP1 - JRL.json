@@ -1,0 +1,35 @@
+{
+    "brim_type": "no_brim",
+    "default_acceleration": "3000",
+    "enable_prime_tower": "0",
+    "enable_support": "0",
+    "from": "User",
+    "gap_infill_speed": "60",
+    "inherits": "0.12mm Standard @Kingroon KLP1",
+    "inner_wall_acceleration": "3000",
+    "inner_wall_speed": "100",
+    "internal_solid_infill_acceleration": "4000",
+    "internal_solid_infill_pattern": "rectilinear",
+    "internal_solid_infill_speed": "120",
+    "ironing_type": "top",
+    "name": "0.12mm Quality @Kingroon KLP1 - JRL",
+    "outer_wall_acceleration": "2000",
+    "outer_wall_speed": "60",
+    "print_extruder_id": [
+        "1"
+    ],
+    "print_extruder_variant": [
+        "Direct Drive Standard"
+    ],
+    "print_settings_id": "0.12mm Quality @Kingroon KLP1 - JRL",
+    "resolution": "0.005",
+    "seam_slope_type": "all",
+    "slice_closing_radius": "0.01",
+    "sparse_infill_acceleration": "5000",
+    "sparse_infill_speed": "150",
+    "top_surface_acceleration": "2000",
+    "top_surface_speed": "50",
+    "travel_acceleration": "5000",
+    "travel_speed": "300",
+    "version": "2.4.0.2"
+}

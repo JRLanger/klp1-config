@@ -114,6 +114,7 @@ OrcaSlicer presets are backed up in [`orca/`](orca/) (LAN IP scrubbed). Start G-
 
 ## Change log
 
+- **2026-10-05** — Added Orca process `0.12mm Quality @Kingroon KLP1 - JRL` for top quality (inherits Kingroon's 0.12 mm profile). Visible features slow and gentle: outer walls 60 mm/s and top surfaces 50 mm/s at 2000 mm/s², gap fill 60 mm/s. Inner walls 100 mm/s at 3000. Hidden infill stays fast (sparse 150 mm/s at 5000, solid 120 at 4000), travel 300 at 5000. `- JRL` (0.20 mm) remains the fast everyday profile.
 - **2026-10-05** — Bed checked after moving the printer. `BED_TRAM`: corners within 0.015 mm, no screw adjustment needed. New `JRLanger` mesh saved: range 0.134 mm (was 0.28). The 25-point mesh took 55 s with the faster probe settings (was about 2 min).
 - **2026-10-05** — Hidden features to 8000 mm/s²: `TEST_MOTION SPEED=300 ACCEL=8000` ran clean. `max_accel_to_decel` 6000 → 8000, so Klipper does not throttle short zig-zag moves when Orca requests 8000 (`max_accel` stays 6000 for macros and probing). Orca: inner wall, sparse infill, internal solid infill and travel acceleration 8000; machine limits X, Y, extruding and travel 8000.
 - **2026-10-05** — Belts balanced and input shaper recalibrated. Diagonal resonance tests showed belt A at 38.9 Hz against belt B at 52.4 Hz (about 55 % tension). After re-tensioning and moving the printer to a sturdier surface, both peak at 53.9 Hz. New shaper saved: X mzv 56.4 Hz, Y mzv 42.6 Hz (was mzv 49.2 / 2hump_ei 53.0). Max acceleration without excess smoothing rises from 7100 / 3100 to 9400 / 5300 mm/s².
