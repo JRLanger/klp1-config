@@ -1,6 +1,6 @@
 # KLP1 Calibration Manual
 
-Printer: Kingroon KLP1. Firmware: Klipper. Interface: Mainsail. Slicer: OrcaSlicer.
+Printer: Kingroon KLP1. Firmware: Klipper. Interface: Fluidd (Mainsail is also installed). Slicer: OrcaSlicer.
 
 This manual has four parts. Do them in this order. Each part uses the results of the parts before it.
 
@@ -88,7 +88,7 @@ Do these steps in this order. Each step uses the result of the step before it.
 Do this step after you move the printer. Do this step also when the mesh shows a large tilt.
 
 1. Clean the build plate with isopropyl alcohol.
-2. Open the Mainsail console.
+2. Open the Fluidd console.
 3. Run `BED_TRAM BED_TEMP=60`.
 4. Wait for the probe to measure the four screw positions.
 5. Read the report in the console. The report gives a turn direction and an amount for each screw.
@@ -104,7 +104,7 @@ Do this step after every tram. Do this step also when you change the build plate
 2. Wait for the bed to heat and soak. The soak takes 10 minutes.
 3. Wait for the probe to measure the mesh.
 4. Run `SAVE_CONFIG`. Klipper restarts.
-5. Open the Mainsail heightmap page. Check the total range of the mesh.
+5. Open the Fluidd Tune page. Find the bed mesh. Check the total range of the mesh.
 
 A range below 0.2 mm is good. A range above 0.4 mm means the bed needs a tram. Go back to step A1.
 
@@ -130,11 +130,11 @@ To stop the procedure without a change, click ABORT.
 The paper test gives an approximate value. A real first layer gives the exact value.
 
 1. Print a single-layer square of 50 x 50 mm.
-2. Open the Mainsail dashboard. Find the Z offset panel.
+2. Open the Fluidd dashboard. Find the Z offset adjustment in the Toolhead panel.
 3. Click - in steps of 0.01 mm when the lines show gaps or round edges.
 4. Click + in steps of 0.01 mm when the surface is rough, transparent, or smeared.
 5. Stop when the lines touch each other and the surface is smooth.
-6. Click Save in the panel. The panel runs `Z_OFFSET_APPLY_PROBE`.
+6. Click the save icon next to the Z offset. Fluidd runs `Z_OFFSET_APPLY_PROBE`. If you cannot find the icon, run `Z_OFFSET_APPLY_PROBE` in the console.
 7. Run `SAVE_CONFIG` after the print ends.
 
 ## A5. Calibrate the input shaper (CALIBRATE_SHAPER)
